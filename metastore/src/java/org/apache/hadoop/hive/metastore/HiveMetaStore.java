@@ -832,7 +832,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private static void logInfo(String m) {
+      LOG.info("i am hera");
       LOG.info(threadLocalId.get().toString() + ": " + m);
+
       logAuditEvent(m);
     }
 
