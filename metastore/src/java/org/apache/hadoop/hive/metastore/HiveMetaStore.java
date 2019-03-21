@@ -1863,11 +1863,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     public Table get_table(final String dbname, final String name) throws MetaException,
         NoSuchObjectException {
       Table t = null;
+      long starttime = System.currentTimeMillis();
       startTableFunction("get_table", dbname, name);
+      LOG.info("startTableFunction:"+(System.currentTimeMillis()-starttime));
       Exception ex = null;
       try {
         t = get_table_core(dbname, name);
         firePreEvent(new PreReadTableEvent(t, this));
+        LOG.info("startTableFunction:"+(System.currentTimeMillis()-starttime));
       } catch (MetaException e) {
         ex = e;
         throw e;
@@ -1879,6 +1882,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       return t;
     }
+
+
+
 
     @Override
     public List<TableMeta> get_table_meta(String dbnames, String tblNames, List<String> tblTypes)
@@ -1911,7 +1917,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         NoSuchObjectException {
       Table t;
       try {
+
         t = getMS().getTable(dbname, name);
+        LOG.info("");
         if (t == null) {
           throw new NoSuchObjectException(dbname + "." + name
               + " table not found");
@@ -1927,6 +1935,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       return t;
     }
+
+
 
     /**
      * Gets multiple tables from the hive metastore.
