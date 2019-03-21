@@ -1012,9 +1012,13 @@ public class ObjectStore implements RawStore, Configurable {
     boolean commited = false;
     Table tbl = null;
     try {
+      long starttime = System.currentTimeMillis();
       openTransaction();
+      LOG.info(dbName+";"+tableName+": begin:"+(System.currentTimeMillis()-starttime));
       tbl = convertToTable(getMTable(dbName, tableName));
+      LOG.info(dbName+";"+tableName+": getMTable:"+(System.currentTimeMillis()-starttime));
       commited = commitTransaction();
+      LOG.info(dbName+";"+tableName+": commitTransaction:"+(System.currentTimeMillis()-starttime));
     } finally {
       if (!commited) {
         rollbackTransaction();
