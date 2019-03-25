@@ -259,7 +259,7 @@ import static org.apache.hadoop.hive.metastore.MetaStoreUtils.validateName;
 public class HiveMetaStore extends ThriftHiveMetastore {
   public static final Log LOG = LogFactory.getLog(HiveMetaStore.class);
   public static final String PARTITION_NUMBER_EXCEED_LIMIT_MSG =
-      "Number of partitions scanned (=%d) on table '%s' exceeds limit (=%d). This is controlled on the metastore server by %s.";
+          "Number of partitions scanned (=%d) on table '%s' exceeds limit (=%d). This is controlled on the metastore server by %s.";
 
   // boolean that tells if the HiveMetaStore (remote) server is being used.
   // Can be used to determine if the calls to metastore api (HMSHandler) are being made with
@@ -274,14 +274,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
   /** A fixed date format to be used for hive partition column values. */
   public static final ThreadLocal<DateFormat> PARTITION_DATE_FORMAT =
-       new ThreadLocal<DateFormat>() {
-    @Override
-    protected DateFormat initialValue() {
-      DateFormat val = new SimpleDateFormat("yyyy-MM-dd");
-      val.setLenient(false); // Without this, 2020-20-20 becomes 2021-08-20.
-      return val;
-    };
-  };
+          new ThreadLocal<DateFormat>() {
+            @Override
+            protected DateFormat initialValue() {
+              DateFormat val = new SimpleDateFormat("yyyy-MM-dd");
+              val.setLenient(false); // Without this, 2020-20-20 becomes 2021-08-20.
+              return val;
+            };
+          };
 
   /**
    * default port on which to start the Hive server
@@ -301,8 +301,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     private final TTransportFactory childTransFactory;
 
     private ChainedTTransportFactory(
-        TTransportFactory parentTransFactory,
-        TTransportFactory childTransFactory) {
+            TTransportFactory parentTransFactory,
+            TTransportFactory childTransFactory) {
       this.parentTransFactory = parentTransFactory;
       this.childTransFactory = childTransFactory;
     }
@@ -314,11 +314,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   }
 
   public static class HMSHandler extends FacebookBase implements
-      IHMSHandler {
+          IHMSHandler {
     public static final Log LOG = HiveMetaStore.LOG;
     private String rawStoreClassName;
     private final HiveConf hiveConf; // stores datastore (jpox) properties,
-                                     // right now they come from jpox.properties
+    // right now they come from jpox.properties
 
     private static String currentUrl;
 
@@ -327,12 +327,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     private Warehouse wh; // hdfs warehouse
     private static final ThreadLocal<RawStore> threadLocalMS =
-        new ThreadLocal<RawStore>() {
-          @Override
-          protected synchronized RawStore initialValue() {
-            return null;
-          }
-        };
+            new ThreadLocal<RawStore>() {
+              @Override
+              protected synchronized RawStore initialValue() {
+                return null;
+              }
+            };
 
     private static final ThreadLocal<TxnHandler> threadLocalTxn = new ThreadLocal<TxnHandler>() {
       @Override
@@ -352,28 +352,28 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     // Thread local configuration is needed as many threads could make changes
     // to the conf using the connection hook
     private static final ThreadLocal<Configuration> threadLocalConf =
-        new ThreadLocal<Configuration>() {
-          @Override
-          protected synchronized Configuration initialValue() {
-            return null;
-          }
-        };
+            new ThreadLocal<Configuration>() {
+              @Override
+              protected synchronized Configuration initialValue() {
+                return null;
+              }
+            };
 
     private static ExecutorService threadPool;
 
     public static final String AUDIT_FORMAT =
-        "ugi=%s\t" + // ugi
-            "ip=%s\t" + // remote IP
-            "cmd=%s\t"; // command
+            "ugi=%s\t" + // ugi
+                    "ip=%s\t" + // remote IP
+                    "cmd=%s\t"; // command
     public static final Log auditLog = LogFactory.getLog(
-        HiveMetaStore.class.getName() + ".audit");
+            HiveMetaStore.class.getName() + ".audit");
     private static final ThreadLocal<Formatter> auditFormatter =
-        new ThreadLocal<Formatter>() {
-          @Override
-          protected Formatter initialValue() {
-            return new Formatter(new StringBuilder(AUDIT_FORMAT.length() * 4));
-          }
-        };
+            new ThreadLocal<Formatter>() {
+              @Override
+              protected Formatter initialValue() {
+                return new Formatter(new StringBuilder(AUDIT_FORMAT.length() * 4));
+              }
+            };
 
     private static final void logAuditEvent(String cmd) {
       if (cmd == null) {
@@ -402,7 +402,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
 
       auditLog.info(fmt.format(AUDIT_FORMAT, ugi.getUserName(),
-          address, cmd).toString());
+              address, cmd).toString());
     }
 
     private static int nextSerialNum = 0;
@@ -451,10 +451,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       synchronized (HMSHandler.class) {
         if (threadPool == null) {
           int numThreads = HiveConf.getIntVar(conf,
-              ConfVars.METASTORE_FS_HANDLER_THREADS_COUNT);
+                  ConfVars.METASTORE_FS_HANDLER_THREADS_COUNT);
           threadPool = Executors.newFixedThreadPool(numThreads,
-              new ThreadFactoryBuilder().setDaemon(true)
-                  .setNameFormat("HMSHandler #%d").build());
+                  new ThreadFactoryBuilder().setDaemon(true)
+                          .setNameFormat("HMSHandler #%d").build());
         }
       }
       if (init) {
@@ -490,17 +490,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     public void init() throws MetaException {
       rawStoreClassName = hiveConf.getVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL);
       initListeners = MetaStoreUtils.getMetaStoreListeners(
-          MetaStoreInitListener.class, hiveConf,
-          hiveConf.getVar(HiveConf.ConfVars.METASTORE_INIT_HOOKS));
+              MetaStoreInitListener.class, hiveConf,
+              hiveConf.getVar(HiveConf.ConfVars.METASTORE_INIT_HOOKS));
       for (MetaStoreInitListener singleInitListener: initListeners) {
-          MetaStoreInitContext context = new MetaStoreInitContext();
-          singleInitListener.onInit(context);
+        MetaStoreInitContext context = new MetaStoreInitContext();
+        singleInitListener.onInit(context);
       }
 
       String alterHandlerName = hiveConf.get("hive.metastore.alter.impl",
-          HiveAlterHandler.class.getName());
+              HiveAlterHandler.class.getName());
       alterHandler = (AlterHandler) ReflectionUtils.newInstance(MetaStoreUtils.getClass(
-          alterHandlerName), hiveConf);
+              alterHandlerName), hiveConf);
       wh = new Warehouse(hiveConf);
 
       synchronized (HMSHandler.class) {
@@ -519,7 +519,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         } catch (Exception e) {
           // log exception, but ignore inability to start
           LOG.error("error in Metrics init: " + e.getClass().getName() + " "
-              + e.getMessage(), e);
+                  + e.getMessage(), e);
         }
       }
 
@@ -528,7 +528,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         LOG.info("Begin calculating metadata count metrics.");
         updateMetrics();
         LOG.info("Finished metadata count metrics: " + initDatabaseCount + " databases, " + initTableCount +
-          " tables, " + initPartCount + " partitions.");
+                " tables, " + initPartCount + " partitions.");
         metrics.addGauge(MetricsConstant.INIT_TOTAL_DATABASES, new MetricsVariable() {
           @Override
           public Object getValue() {
@@ -550,10 +550,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
 
       preListeners = MetaStoreUtils.getMetaStoreListeners(MetaStorePreEventListener.class,
-          hiveConf,
-          hiveConf.getVar(HiveConf.ConfVars.METASTORE_PRE_EVENT_LISTENERS));
+              hiveConf,
+              hiveConf.getVar(HiveConf.ConfVars.METASTORE_PRE_EVENT_LISTENERS));
       listeners = MetaStoreUtils.getMetaStoreListeners(MetaStoreEventListener.class, hiveConf,
-          hiveConf.getVar(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS));
+              hiveConf.getVar(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS));
       listeners.add(new SessionPropertiesListener(hiveConf));
       transactionalListeners = MetaStoreUtils.getMetaStoreListeners(MetaStoreEventListener.class,hiveConf,
               hiveConf.getVar(ConfVars.METASTORE_TRANSACTIONAL_EVENT_LISTENERS));
@@ -562,11 +562,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
 
       endFunctionListeners = MetaStoreUtils.getMetaStoreListeners(
-          MetaStoreEndFunctionListener.class, hiveConf,
-          hiveConf.getVar(HiveConf.ConfVars.METASTORE_END_FUNCTION_LISTENERS));
+              MetaStoreEndFunctionListener.class, hiveConf,
+              hiveConf.getVar(HiveConf.ConfVars.METASTORE_END_FUNCTION_LISTENERS));
 
       String partitionValidationRegex =
-          hiveConf.getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
+              hiveConf.getVar(HiveConf.ConfVars.METASTORE_PARTITION_NAME_WHITELIST_PATTERN);
       if (partitionValidationRegex != null && !partitionValidationRegex.isEmpty()) {
         partitionValidationPattern = Pattern.compile(partitionValidationRegex);
       } else {
@@ -617,7 +617,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       String validate = confVar.validate(value);
       if (validate != null) {
         throw new MetaException("Invalid configuration value " + value + " for key " + key +
-            " by " + validate);
+                " by " + validate);
       }
       Configuration configuration = getConf();
       String oldValue = configuration.get(key);
@@ -655,12 +655,29 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     @InterfaceAudience.LimitedPrivate({"HCATALOG"})
     @InterfaceStability.Evolving
     public RawStore getMS() throws MetaException {
+      long starttime = System.currentTimeMillis();
+
       RawStore ms = threadLocalMS.get();
+
+      LOG.info("Thread.currentThread().getName()"+Thread.currentThread().getName());
+
+      LOG.info("threadLocalMS.get():"+(System.currentTimeMillis()-starttime));
       if (ms == null) {
+        starttime = System.currentTimeMillis();
         ms = newRawStore();
+        LOG.info("newRawStore"+(System.currentTimeMillis()-starttime));
+        starttime = System.currentTimeMillis();
         ms.verifySchema();
+        LOG.info("verifySchema"+(System.currentTimeMillis()-starttime));
+        starttime = System.currentTimeMillis();
         threadLocalMS.set(ms);
+        LOG.info("threadLocalMSset"+(System.currentTimeMillis()-starttime));
+        starttime = System.currentTimeMillis();
         ms = threadLocalMS.get();
+        LOG.info("threadLocalMSget"+(System.currentTimeMillis()-starttime));
+      }else{
+        LOG.info("我获取到了");
+
       }
       return ms;
     }
@@ -676,10 +693,21 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     private RawStore newRawStore() throws MetaException {
       LOG.info(addPrefix("Opening raw store with implemenation class:"
-          + rawStoreClassName));
+              + rawStoreClassName));
+      long starttime = System.currentTimeMillis();
       Configuration conf = getConf();
+      LOG.info("getConf"+(System.currentTimeMillis()-starttime));
 
-      return RawStoreProxy.getProxy(hiveConf, conf, rawStoreClassName, threadLocalId.get());
+      starttime = System.currentTimeMillis();
+      int i = threadLocalId.get();
+      LOG.info("threadLocalId"+(System.currentTimeMillis()-starttime));
+
+      starttime = System.currentTimeMillis();
+      RawStore rs = RawStoreProxy.getProxy(hiveConf, conf, rawStoreClassName, i);
+      LOG.info("RawStoreProxy.getProxy"+(System.currentTimeMillis()-starttime));
+
+
+      return rs;
     }
 
     private void createDefaultDB_core(RawStore ms) throws MetaException, InvalidObjectException {
@@ -687,7 +715,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         ms.getDatabase(DEFAULT_DATABASE_NAME);
       } catch (NoSuchObjectException e) {
         Database db = new Database(DEFAULT_DATABASE_NAME, DEFAULT_DATABASE_COMMENT,
-          wh.getDefaultDatabasePath(DEFAULT_DATABASE_NAME).toString(), null);
+                wh.getDefaultDatabasePath(DEFAULT_DATABASE_NAME).toString(), null);
         db.setOwnerName(PUBLIC);
         db.setOwnerType(PrincipalType.ROLE);
         ms.createDatabase(db);
@@ -762,8 +790,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       // now grant all privs to admin
       PrivilegeBag privs = new PrivilegeBag();
       privs.addToPrivileges(new HiveObjectPrivilege( new HiveObjectRef(HiveObjectType.GLOBAL, null,
-        null, null, null), ADMIN, PrincipalType.ROLE, new PrivilegeGrantInfo("All", 0, ADMIN,
-        PrincipalType.ROLE, true)));
+              null, null, null), ADMIN, PrincipalType.ROLE, new PrivilegeGrantInfo("All", 0, ADMIN,
+              PrincipalType.ROLE, true)));
       try {
         ms.grantPrivileges(privs);
       } catch (InvalidObjectException e) {
@@ -804,10 +832,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       // Since user names need to be valid unix user names, per IEEE Std 1003.1-2001 they cannot
       // contain comma, so we can safely split above string on comma.
 
-     Iterator<String> users = Splitter.on(",").trimResults().omitEmptyStrings().split(userStr).iterator();
+      Iterator<String> users = Splitter.on(",").trimResults().omitEmptyStrings().split(userStr).iterator();
       if (!users.hasNext()) {
         LOG.info("No user is added in admin role, since config value "+ userStr +
-          " is in incorrect format. We accept comma seprated list of users.");
+                " is in incorrect format. We accept comma seprated list of users.");
         return;
       }
       Role adminRole;
@@ -832,16 +860,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private static void logInfo(String m) {
-      LOG.info("i am hera");
       LOG.info(threadLocalId.get().toString() + ": " + m);
-
       logAuditEvent(m);
     }
 
     private String startFunction(String function, String extraLogInfo) {
       incrementCounter(function);
       logInfo((getIpAddress() == null ? "" : "source:" + getIpAddress() + " ") +
-          function + extraLogInfo);
+              function + extraLogInfo);
       if (MetricsFactory.getInstance() != null) {
         MetricsFactory.getInstance().startStoredScope(function);
       }
@@ -862,13 +888,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private String startPartitionFunction(String function, String db, String tbl,
-        List<String> partVals) {
+                                          List<String> partVals) {
       return startFunction(function, " : db=" + db + " tbl=" + tbl
-          + "[" + join(partVals, ",") + "]");
+              + "[" + join(partVals, ",") + "]");
     }
 
     private String startPartitionFunction(String function, String db, String tbl,
-        Map<String, String> partName) {
+                                          Map<String, String> partName) {
       return startFunction(function, " : db=" + db + " tbl=" + tbl + "partition=" + partName);
     }
 
@@ -876,7 +902,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       endFunction(function, successful, e, null);
     }
     private void endFunction(String function, boolean successful, Exception e,
-                            String inputTableName) {
+                             String inputTableName) {
       endFunction(function, new MetaStoreEndFunctionContext(successful, e, inputTableName));
     }
 
@@ -915,7 +941,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private void create_database_core(RawStore ms, final Database db)
-        throws AlreadyExistsException, InvalidObjectException, MetaException {
+            throws AlreadyExistsException, InvalidObjectException, MetaException {
       if (!validateName(db.getName())) {
         throw new InvalidObjectException(db.getName() + " is not a valid database name");
       }
@@ -935,7 +961,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!wh.isDir(dbPath)) {
           if (!wh.mkdirs(dbPath, true)) {
             throw new MetaException("Unable to create database path " + dbPath +
-                ", failed to create database " + db.getName());
+                    ", failed to create database " + db.getName());
           }
           madeDir = true;
         }
@@ -945,9 +971,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!transactionalListeners.isEmpty()) {
           transactionalListenersResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.CREATE_DATABASE,
-                                                    new CreateDatabaseEvent(db, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.CREATE_DATABASE,
+                          new CreateDatabaseEvent(db, true, this));
         }
 
         success = ms.commitTransaction();
@@ -961,17 +987,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.CREATE_DATABASE,
-                                                new CreateDatabaseEvent(db, success, this),
-                                                null,
-                                                transactionalListenersResponses);
+                  EventType.CREATE_DATABASE,
+                  new CreateDatabaseEvent(db, success, this),
+                  null,
+                  transactionalListenersResponses);
         }
       }
     }
 
     @Override
     public void create_database(final Database db)
-        throws AlreadyExistsException, InvalidObjectException, MetaException {
+            throws AlreadyExistsException, InvalidObjectException, MetaException {
       startFunction("create_database", ": " + db.toString());
       boolean success = false;
       Exception ex = null;
@@ -1039,7 +1065,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      * @throws MetaException
      */
     public Database get_database_core(final String name) throws NoSuchObjectException,
-        MetaException {
+            MetaException {
       Database db = null;
       try {
         db = getMS().getDatabase(name);
@@ -1056,7 +1082,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void alter_database(final String dbName, final Database db)
-        throws NoSuchObjectException, TException, MetaException {
+            throws NoSuchObjectException, TException, MetaException {
       startFunction("alter_database" + dbName);
       boolean success = false;
       Exception ex = null;
@@ -1072,9 +1098,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private void drop_database_core(RawStore ms,
-        final String name, final boolean deleteData, final boolean cascade)
-        throws NoSuchObjectException, InvalidOperationException, MetaException,
-        IOException, InvalidObjectException, InvalidInputException {
+                                    final String name, final boolean deleteData, final boolean cascade)
+            throws NoSuchObjectException, InvalidOperationException, MetaException,
+            IOException, InvalidObjectException, InvalidInputException {
       boolean success = false;
       Database db = null;
       List<Path> tablePaths = new ArrayList<Path>();
@@ -1092,18 +1118,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!cascade) {
           if (!allTables.isEmpty()) {
             throw new InvalidOperationException(
-                "Database " + db.getName() + " is not empty. One or more tables exist.");
+                    "Database " + db.getName() + " is not empty. One or more tables exist.");
           }
           if (!allFunctions.isEmpty()) {
             throw new InvalidOperationException(
-                "Database " + db.getName() + " is not empty. One or more functions exist.");
+                    "Database " + db.getName() + " is not empty. One or more functions exist.");
           }
         }
         Path path = new Path(db.getLocationUri()).getParent();
         if (!wh.isWritable(path)) {
           throw new MetaException("Database not dropped since " +
-              path + " is not writable by " +
-              hiveConf.getUser());
+                  path + " is not writable by " +
+                  hiveConf.getUser());
         }
 
         Path databasePath = wh.getDnsPath(wh.getDatabasePath(db));
@@ -1115,7 +1141,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         // drop tables before dropping db
         int tableBatchSize = HiveConf.getIntVar(hiveConf,
-            ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
+                ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
 
         int startIndex = 0;
         // retrieve the tables from the metastore in batches to alleviate memory constraints
@@ -1139,8 +1165,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
                 tablePath = wh.getDnsPath(new Path(table.getSd().getLocation()));
                 if (!wh.isWritable(tablePath.getParent())) {
                   throw new MetaException("Database metadata not deleted since table: " +
-                      table.getTableName() + " has a parent location " + tablePath.getParent() +
-                      " which is not writable by " + hiveConf.getUser());
+                          table.getTableName() + " has a parent location " + tablePath.getParent() +
+                          " which is not writable by " + hiveConf.getUser());
                 }
 
                 if (!isSubdirectory(databasePath, tablePath)) {
@@ -1151,7 +1177,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               // For each partition in each table, drop the partitions and get a list of
               // partitions' locations which might need to be deleted
               partitionPaths = dropPartitionsAndGetLocations(ms, name, table.getTableName(),
-                  tablePath, table.getPartitionKeys(), deleteData && !isExternal(table));
+                      tablePath, table.getPartitionKeys(), deleteData && !isExternal(table));
 
               // Drop the table but not its data
               drop_table(name, table.getTableName(), false);
@@ -1164,9 +1190,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (ms.dropDatabase(name)) {
           if (!transactionalListeners.isEmpty()) {
             transactionalListenerResponses =
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.DROP_DATABASE,
-                                                      new DropDatabaseEvent(db, true, this));
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.DROP_DATABASE,
+                            new DropDatabaseEvent(db, true, this));
           }
 
           success = ms.commitTransaction();
@@ -1186,17 +1212,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             wh.deleteDir(new Path(db.getLocationUri()), true);
           } catch (Exception e) {
             LOG.error("Failed to delete database directory: " + db.getLocationUri() +
-                " " + e.getMessage());
+                    " " + e.getMessage());
           }
           // it is not a terrible thing even if the data is not deleted
         }
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.DROP_DATABASE,
-                                                new DropDatabaseEvent(db, success, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.DROP_DATABASE,
+                  new DropDatabaseEvent(db, success, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
     }
@@ -1212,12 +1238,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      */
     private boolean isSubdirectory(Path parent, Path other) {
       return other.toString().startsWith(parent.toString().endsWith(Path.SEPARATOR) ?
-          parent.toString() : parent.toString() + Path.SEPARATOR);
+              parent.toString() : parent.toString() + Path.SEPARATOR);
     }
 
     @Override
     public void drop_database(final String dbName, final boolean deleteData, final boolean cascade)
-        throws NoSuchObjectException, InvalidOperationException, MetaException {
+            throws NoSuchObjectException, InvalidOperationException, MetaException {
 
       startFunction("drop_database", ": " + dbName);
       if (DEFAULT_DATABASE_NAME.equalsIgnoreCase(dbName)) {
@@ -1292,7 +1318,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private void create_type_core(final RawStore ms, final Type type)
-        throws AlreadyExistsException, MetaException, InvalidObjectException {
+            throws AlreadyExistsException, MetaException, InvalidObjectException {
       if (!MetaStoreUtils.validateName(type.getName())) {
         throw new InvalidObjectException("Invalid type name");
       }
@@ -1314,7 +1340,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean create_type(final Type type) throws AlreadyExistsException,
-        MetaException, InvalidObjectException {
+            MetaException, InvalidObjectException {
       startFunction("create_type", ": " + type.toString());
       boolean success = false;
       Exception ex = null;
@@ -1366,12 +1392,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private boolean is_type_exists(RawStore ms, String typeName)
-        throws MetaException {
+            throws MetaException {
       return (ms.getType(typeName) != null);
     }
 
     private void drop_type_core(final RawStore ms, String typeName)
-        throws NoSuchObjectException, MetaException {
+            throws NoSuchObjectException, MetaException {
       boolean success = false;
       try {
         ms.openTransaction();
@@ -1423,13 +1449,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private void create_table_core(final RawStore ms, final Table tbl,
-        final EnvironmentContext envContext)
-        throws AlreadyExistsException, MetaException,
-        InvalidObjectException, NoSuchObjectException {
+                                   final EnvironmentContext envContext)
+            throws AlreadyExistsException, MetaException,
+            InvalidObjectException, NoSuchObjectException {
 
       if (!MetaStoreUtils.validateName(tbl.getTableName())) {
         throw new InvalidObjectException(tbl.getTableName()
-            + " is not a valid object name");
+                + " is not a valid object name");
       }
       String validate = MetaStoreUtils.validateTblColumns(tbl.getSd().getCols());
       if (validate != null) {
@@ -1448,7 +1474,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw new InvalidObjectException("Invalid skew column " + validate);
         }
         validate = MetaStoreUtils.validateSkewedColNamesSubsetCol(
-            skew.getSkewedColNames(), tbl.getSd().getCols());
+                skew.getSkewedColNames(), tbl.getSd().getCols());
         if (validate != null) {
           throw new InvalidObjectException("Invalid skew column " + validate);
         }
@@ -1470,18 +1496,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         // get_table checks whether database exists, it should be moved here
         if (is_table_exists(ms, tbl.getDbName(), tbl.getTableName())) {
           throw new AlreadyExistsException("Table " + tbl.getTableName()
-              + " already exists");
+                  + " already exists");
         }
 
         if (!TableType.VIRTUAL_VIEW.toString().equals(tbl.getTableType())) {
           if (tbl.getSd().getLocation() == null
-              || tbl.getSd().getLocation().isEmpty()) {
+                  || tbl.getSd().getLocation().isEmpty()) {
             tblPath = wh.getTablePath(
-                ms.getDatabase(tbl.getDbName()), tbl.getTableName());
+                    ms.getDatabase(tbl.getDbName()), tbl.getTableName());
           } else {
             if (!isExternal(tbl) && !MetaStoreUtils.isNonNativeTable(tbl)) {
               LOG.warn("Location: " + tbl.getSd().getLocation()
-                  + " specified for non-external table:" + tbl.getTableName());
+                      + " specified for non-external table:" + tbl.getTableName());
             }
             tblPath = wh.getDnsPath(new Path(tbl.getSd().getLocation()));
           }
@@ -1492,13 +1518,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           if (!wh.isDir(tblPath)) {
             if (!wh.mkdirs(tblPath, true)) {
               throw new MetaException(tblPath
-                  + " is not a directory or unable to create one");
+                      + " is not a directory or unable to create one");
             }
             madeDir = true;
           }
         }
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
-            !MetaStoreUtils.isView(tbl)) {
+                !MetaStoreUtils.isView(tbl)) {
           if (tbl.getPartitionKeysSize() == 0)  { // Unpartitioned table
             MetaStoreUtils.updateUnpartitionedTableStatsFast(db, tbl, wh, madeDir);
           } else { // Partitioned table with no partitions.
@@ -1510,17 +1536,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         long time = System.currentTimeMillis() / 1000;
         tbl.setCreateTime((int) time);
         if (tbl.getParameters() == null ||
-            tbl.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
+                tbl.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
           tbl.putToParameters(hive_metastoreConstants.DDL_TIME, Long.toString(time));
         }
 
         ms.createTable(tbl);
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.CREATE_TABLE,
-                                                    new CreateTableEvent(tbl, true, this),
-                                                    envContext);
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.CREATE_TABLE,
+                          new CreateTableEvent(tbl, true, this),
+                          envContext);
         }
 
         success = ms.commitTransaction();
@@ -1534,24 +1560,24 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.CREATE_TABLE,
-                                                new CreateTableEvent(tbl, success, this),
-                                                envContext,
-                                                transactionalListenerResponses);
+                  EventType.CREATE_TABLE,
+                  new CreateTableEvent(tbl, success, this),
+                  envContext,
+                  transactionalListenerResponses);
         }
       }
     }
 
     @Override
     public void create_table(final Table tbl) throws AlreadyExistsException,
-        MetaException, InvalidObjectException {
+            MetaException, InvalidObjectException {
       create_table_with_environment_context(tbl, null);
     }
 
     @Override
     public void create_table_with_environment_context(final Table tbl,
-        final EnvironmentContext envContext)
-        throws AlreadyExistsException, MetaException, InvalidObjectException {
+                                                      final EnvironmentContext envContext)
+            throws AlreadyExistsException, MetaException, InvalidObjectException {
       startFunction("create_table", ": " + tbl.toString());
       boolean success = false;
       Exception ex = null;
@@ -1578,14 +1604,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private boolean is_table_exists(RawStore ms, String dbname, String name)
-        throws MetaException {
+            throws MetaException {
       return (ms.getTable(dbname, name) != null);
     }
 
     private boolean drop_table_core(final RawStore ms, final String dbname, final String name,
-        final boolean deleteData, final EnvironmentContext envContext,
-        final String indexName) throws NoSuchObjectException,
-        MetaException, IOException, InvalidObjectException, InvalidInputException {
+                                    final boolean deleteData, final EnvironmentContext envContext,
+                                    final String indexName) throws NoSuchObjectException,
+            MetaException, IOException, InvalidObjectException, InvalidInputException {
       boolean success = false;
       boolean isExternal = false;
       Path tblPath = null;
@@ -1610,7 +1636,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         boolean isIndexTable = isIndexTable(tbl);
         if (indexName == null && isIndexTable) {
           throw new RuntimeException(
-              "The table " + name + " is an index table. Please do drop index instead.");
+                  "The table " + name + " is an index table. Please do drop index instead.");
         }
 
         if (!isIndexTable) {
@@ -1632,25 +1658,25 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           if (!wh.isWritable(tblPath.getParent())) {
             String target = indexName == null ? "Table" : "Index table";
             throw new MetaException(target + " metadata not deleted since " +
-                tblPath.getParent() + " is not writable by " +
-                hiveConf.getUser());
+                    tblPath.getParent() + " is not writable by " +
+                    hiveConf.getUser());
           }
         }
 
         // Drop the partitions and get a list of locations which need to be deleted
         partPaths = dropPartitionsAndGetLocations(ms, dbname, name, tblPath,
-            tbl.getPartitionKeys(), deleteData && !isExternal);
+                tbl.getPartitionKeys(), deleteData && !isExternal);
         if (!ms.dropTable(dbname, name)) {
           String tableName = dbname + "." + name;
           throw new MetaException(indexName == null ? "Unable to drop table " + tableName:
-              "Unable to drop index table " + tableName + " for index " + indexName);
+                  "Unable to drop index table " + tableName + " for index " + indexName);
         } else {
           if (!transactionalListeners.isEmpty()) {
             transactionalListenerResponses =
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.DROP_TABLE,
-                                                      new DropTableEvent(tbl, deleteData, true, this),
-                                                      envContext);
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.DROP_TABLE,
+                            new DropTableEvent(tbl, deleteData, true, this),
+                            envContext);
           }
           success = ms.commitTransaction();
         }
@@ -1668,10 +1694,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.DROP_TABLE,
-                                                new DropTableEvent(tbl, deleteData, success, this),
-                                                envContext,
-                                                transactionalListenerResponses);
+                  EventType.DROP_TABLE,
+                  new DropTableEvent(tbl, deleteData, success, this),
+                  envContext,
+                  transactionalListenerResponses);
         }
       }
       return success;
@@ -1700,7 +1726,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           wh.deleteDir(tablePath, true, ifPurge);
         } catch (Exception e) {
           LOG.error("Failed to delete table directory: " + tablePath +
-              " " + e.getMessage());
+                  " " + e.getMessage());
         }
       }
     }
@@ -1716,13 +1742,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     /**
-    * Give a list of partitions' locations, tries to delete each one
-    * and for each that fails logs an error.
-    *
-    * @param partPaths
-    * @param ifPurge completely purge the partition (skipping trash) while
-    *                removing data from warehouse
-    */
+     * Give a list of partitions' locations, tries to delete each one
+     * and for each that fails logs an error.
+     *
+     * @param partPaths
+     * @param ifPurge completely purge the partition (skipping trash) while
+     *                removing data from warehouse
+     */
     private void deletePartitionData(List<Path> partPaths, boolean ifPurge) {
       if (partPaths != null && !partPaths.isEmpty()) {
         for (Path partPath : partPaths) {
@@ -1730,7 +1756,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             wh.deleteDir(partPath, true, ifPurge);
           } catch (Exception e) {
             LOG.error("Failed to delete partition directory: " + partPath +
-                " " + e.getMessage());
+                    " " + e.getMessage());
           }
         }
       }
@@ -1759,11 +1785,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      * @throws NoSuchObjectException
      */
     private List<Path> dropPartitionsAndGetLocations(RawStore ms, String dbName,
-      String tableName, Path tablePath, List<FieldSchema> partitionKeys, boolean checkLocation)
-      throws MetaException, IOException, NoSuchObjectException, InvalidObjectException,
-      InvalidInputException {
+                                                     String tableName, Path tablePath, List<FieldSchema> partitionKeys, boolean checkLocation)
+            throws MetaException, IOException, NoSuchObjectException, InvalidObjectException,
+            InvalidInputException {
       int partitionBatchSize = HiveConf.getIntVar(hiveConf,
-          ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
+              ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
       Path tableDnsPath = null;
       if (tablePath != null) {
         tableDnsPath = wh.getDnsPath(tablePath);
@@ -1781,16 +1807,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         List<String> partNames = new ArrayList<String>();
         for (Partition part : partsToDelete) {
           if (checkLocation && part.getSd() != null &&
-              part.getSd().getLocation() != null) {
+                  part.getSd().getLocation() != null) {
 
             Path partPath = wh.getDnsPath(new Path(part.getSd().getLocation()));
             if (tableDnsPath == null ||
-                (partPath != null && !isSubdirectory(tableDnsPath, partPath))) {
+                    (partPath != null && !isSubdirectory(tableDnsPath, partPath))) {
               if (!wh.isWritable(partPath.getParent())) {
                 throw new MetaException("Table metadata not deleted since the partition " +
-                    Warehouse.makePartName(partitionKeys, part.getValues()) +
-                    " has parent location " + partPath.getParent() + " which is not writable " +
-                    "by " + hiveConf.getUser());
+                        Warehouse.makePartName(partitionKeys, part.getValues()) +
+                        " has parent location " + partPath.getParent() + " which is not writable " +
+                        "by " + hiveConf.getUser());
               }
               partPaths.add(partPath);
             }
@@ -1814,14 +1840,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void drop_table(final String dbname, final String name, final boolean deleteData)
-        throws NoSuchObjectException, MetaException {
+            throws NoSuchObjectException, MetaException {
       drop_table_with_environment_context(dbname, name, deleteData, null);
     }
 
     @Override
     public void drop_table_with_environment_context(final String dbname, final String name,
-        final boolean deleteData, final EnvironmentContext envContext)
-        throws NoSuchObjectException, MetaException {
+                                                    final boolean deleteData, final EnvironmentContext envContext)
+            throws NoSuchObjectException, MetaException {
       startTableFunction("drop_table", dbname, name);
 
       boolean success = false;
@@ -1863,16 +1889,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Table get_table(final String dbname, final String name) throws MetaException,
-        NoSuchObjectException {
+            NoSuchObjectException {
       Table t = null;
-      long starttime = System.currentTimeMillis();
       startTableFunction("get_table", dbname, name);
-      LOG.info("startTableFunction:"+(System.currentTimeMillis()-starttime));
       Exception ex = null;
       try {
+        long starttime = System.currentTimeMillis();
         t = get_table_core(dbname, name);
+        LOG.info("get_table_core:"+(System.currentTimeMillis()-starttime)+",dbname:"+dbname+"tablename:"+name);
+        starttime = System.currentTimeMillis();
         firePreEvent(new PreReadTableEvent(t, this));
-        LOG.info("startTableFunction:"+(System.currentTimeMillis()-starttime));
+        LOG.info("firePreEvent:"+(System.currentTimeMillis()-starttime)+",dbname:"+dbname+"tablename:"+name);
       } catch (MetaException e) {
         ex = e;
         throw e;
@@ -1885,12 +1912,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       return t;
     }
 
-
-
-
     @Override
     public List<TableMeta> get_table_meta(String dbnames, String tblNames, List<String> tblTypes)
-        throws MetaException, NoSuchObjectException {
+            throws MetaException, NoSuchObjectException {
       List<TableMeta> t = null;
       startTableFunction("get_table_metas", dbnames, tblNames);
       Exception ex = null;
@@ -1916,15 +1940,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      * @throws NoSuchObjectException
      */
     public Table get_table_core(final String dbname, final String name) throws MetaException,
-        NoSuchObjectException {
+            NoSuchObjectException {
       Table t;
       try {
-
-        t = getMS().getTable(dbname, name);
-        LOG.info("");
+        long starttime = System.currentTimeMillis();
+        RawStore rs = getMS();
+        LOG.info(dbname+";"+name+": getMS:"+(System.currentTimeMillis()-starttime));
+        starttime = System.currentTimeMillis();
+        t = rs.getTable(dbname, name);
+        LOG.info(dbname+";"+name+": getTable:"+(System.currentTimeMillis()-starttime));
         if (t == null) {
           throw new NoSuchObjectException(dbname + "." + name
-              + " table not found");
+                  + " table not found");
         }
       } catch (Exception e) {
         if (e instanceof MetaException) {
@@ -1937,8 +1964,6 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       return t;
     }
-
-
 
     /**
      * Gets multiple tables from the hive metastore.
@@ -1958,12 +1983,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      */
     @Override
     public List<Table> get_table_objects_by_name(final String dbName, final List<String> tableNames)
-        throws MetaException, InvalidOperationException, UnknownDBException {
+            throws MetaException, InvalidOperationException, UnknownDBException {
       List<Table> tables = new ArrayList<Table>();
       startMultiTableFunction("get_multi_table", dbName, tableNames);
       Exception ex = null;
       int tableBatchSize = HiveConf.getIntVar(hiveConf,
-          ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
+              ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
 
       try {
         if (dbName == null || dbName.isEmpty()) {
@@ -2014,8 +2039,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<String> get_table_names_by_filter(
-        final String dbName, final String filter, final short maxTables)
-        throws MetaException, InvalidOperationException, UnknownDBException {
+            final String dbName, final String filter, final short maxTables)
+            throws MetaException, InvalidOperationException, UnknownDBException {
       List<String> tables = null;
       startFunction("get_table_names_by_filter", ": db = " + dbName + ", filter = " + filter);
       Exception ex = null;
@@ -2045,8 +2070,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private Partition append_partition_common(RawStore ms, String dbName, String tableName,
-        List<String> part_vals, EnvironmentContext envContext) throws InvalidObjectException,
-        AlreadyExistsException, MetaException {
+                                              List<String> part_vals, EnvironmentContext envContext) throws InvalidObjectException,
+            AlreadyExistsException, MetaException {
 
       Partition part = new Partition();
       boolean success = false, madeDir = false;
@@ -2064,24 +2089,24 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         tbl = ms.getTable(part.getDbName(), part.getTableName());
         if (tbl == null) {
           throw new InvalidObjectException(
-              "Unable to add partition because table or database do not exist");
+                  "Unable to add partition because table or database do not exist");
         }
         if (tbl.getSd().getLocation() == null) {
           throw new MetaException(
-              "Cannot append a partition to a view");
+                  "Cannot append a partition to a view");
         }
 
         firePreEvent(new PreAddPartitionEvent(tbl, part, this));
 
         part.setSd(tbl.getSd());
         partLocation = new Path(tbl.getSd().getLocation(), Warehouse
-            .makePartName(tbl.getPartitionKeys(), part_vals));
+                .makePartName(tbl.getPartitionKeys(), part_vals));
         part.getSd().setLocation(partLocation.toString());
 
         Partition old_part = null;
         try {
           old_part = ms.getPartition(part.getDbName(), part
-              .getTableName(), part.getValues());
+                  .getTableName(), part.getValues());
         } catch (NoSuchObjectException e) {
           // this means there is no existing partition
           old_part = null;
@@ -2093,7 +2118,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!wh.isDir(partLocation)) {
           if (!wh.mkdirs(partLocation, true)) {
             throw new MetaException(partLocation
-                + " is not a directory or unable to create one");
+                    + " is not a directory or unable to create one");
           }
           madeDir = true;
         }
@@ -2104,17 +2129,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         part.putToParameters(hive_metastoreConstants.DDL_TIME, Long.toString(time));
 
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
-            !MetaStoreUtils.isView(tbl)) {
+                !MetaStoreUtils.isView(tbl)) {
           MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir);
         }
 
         if (ms.addPartition(part)) {
           if (!transactionalListeners.isEmpty()) {
             transactionalListenerResponses =
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.ADD_PARTITION,
-                                                      new AddPartitionEvent(tbl, part, true, this),
-                                                      envContext);
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.ADD_PARTITION,
+                            new AddPartitionEvent(tbl, part, true, this),
+                            envContext);
           }
 
           success = ms.commitTransaction();
@@ -2129,10 +2154,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ADD_PARTITION,
-                                                new AddPartitionEvent(tbl, part, success, this),
-                                                envContext,
-                                                transactionalListenerResponses);
+                  EventType.ADD_PARTITION,
+                  new AddPartitionEvent(tbl, part, success, this),
+                  envContext,
+                  transactionalListenerResponses);
         }
       }
       return part;
@@ -2152,15 +2177,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Partition append_partition(final String dbName, final String tableName,
-        final List<String> part_vals) throws InvalidObjectException,
-        AlreadyExistsException, MetaException {
+                                      final List<String> part_vals) throws InvalidObjectException,
+            AlreadyExistsException, MetaException {
       return append_partition_with_environment_context(dbName, tableName, part_vals, null);
     }
 
     @Override
     public Partition append_partition_with_environment_context(final String dbName,
-        final String tableName, final List<String> part_vals, final EnvironmentContext envContext)
-        throws InvalidObjectException, AlreadyExistsException, MetaException {
+                                                               final String tableName, final List<String> part_vals, final EnvironmentContext envContext)
+            throws InvalidObjectException, AlreadyExistsException, MetaException {
       startPartitionFunction("append_partition", dbName, tableName, part_vals);
       if (LOG.isDebugEnabled()) {
         for (String part : part_vals) {
@@ -2253,7 +2278,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           String rhsValue = rhsValues.get(i);
 
           if ((lhsValue == null && rhsValue != null)
-              || (lhsValue != null && !lhsValue.equals(rhsValue))) {
+                  || (lhsValue != null && !lhsValue.equals(rhsValue))) {
             return false;
           }
         }
@@ -2263,13 +2288,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<Partition> add_partitions_core(final RawStore ms,
-        String dbName, String tblName, List<Partition> parts, final boolean ifNotExists)
+                                                String dbName, String tblName, List<Partition> parts, final boolean ifNotExists)
             throws MetaException, InvalidObjectException, AlreadyExistsException, TException {
       logInfo("add_partitions");
       boolean success = false;
       // Ensures that the list doesn't have dups, and keeps track of directories we have created.
       final Map<PartValEqWrapper, Boolean> addedPartitions =
-          Collections.synchronizedMap(new HashMap<PartValEqWrapper, Boolean>());
+              Collections.synchronizedMap(new HashMap<PartValEqWrapper, Boolean>());
       final List<Partition> result = new ArrayList<Partition>();
       final List<Partition> existingParts = new ArrayList<Partition>();;
       Table tbl = null;
@@ -2280,7 +2305,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         tbl = ms.getTable(dbName, tblName);
         if (tbl == null) {
           throw new InvalidObjectException("Unable to add partitions because "
-              + "database or table " + dbName + "." + tblName + " does not exist");
+                  + "database or table " + dbName + "." + tblName + " does not exist");
         }
 
         if (!parts.isEmpty()) {
@@ -2293,7 +2318,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (final Partition part : parts) {
           if (!part.getTableName().equals(tblName) || !part.getDbName().equals(dbName)) {
             throw new MetaException("Partition does not belong to target table "
-                + dbName + "." + tblName + ": " + part);
+                    + dbName + "." + tblName + ": " + part);
           }
 
           boolean shouldAdd = startAddPartition(ms, part, ifNotExists);
@@ -2362,9 +2387,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.ADD_PARTITION,
-                                                    new AddPartitionEvent(tbl, result, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.ADD_PARTITION,
+                          new AddPartitionEvent(tbl, result, true, this));
         }
 
         success = ms.commitTransaction();
@@ -2380,22 +2405,22 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
           if (!listeners.isEmpty()) {
             MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                  EventType.ADD_PARTITION,
-                                                  new AddPartitionEvent(tbl, parts, false, this));
+                    EventType.ADD_PARTITION,
+                    new AddPartitionEvent(tbl, parts, false, this));
           }
         } else {
           if (!listeners.isEmpty()) {
             MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                  EventType.ADD_PARTITION,
-                                                  new AddPartitionEvent(tbl, result, true, this),
-                                                  null,
-                                                  transactionalListenerResponses);
+                    EventType.ADD_PARTITION,
+                    new AddPartitionEvent(tbl, result, true, this),
+                    null,
+                    transactionalListenerResponses);
 
             if (!existingParts.isEmpty()) {
               // The request has succeeded but we failed to add these partitions.
               MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                    EventType.ADD_PARTITION,
-                                                    new AddPartitionEvent(tbl, existingParts, false, this));
+                      EventType.ADD_PARTITION,
+                      new AddPartitionEvent(tbl, existingParts, false, this));
             }
           }
         }
@@ -2405,14 +2430,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public AddPartitionsResult add_partitions_req(AddPartitionsRequest request)
-        throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+            throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
       AddPartitionsResult result = new AddPartitionsResult();
       if (request.getParts().isEmpty()) {
         return result;
       }
       try {
         List<Partition> parts = add_partitions_core(getMS(), request.getDbName(),
-            request.getTblName(), request.getParts(), request.isIfNotExists());
+                request.getTblName(), request.getParts(), request.isIfNotExists());
         if (request.isNeedResult()) {
           result.setPartitions(parts);
         }
@@ -2426,7 +2451,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public int add_partitions(final List<Partition> parts) throws MetaException,
-        InvalidObjectException, AlreadyExistsException {
+            InvalidObjectException, AlreadyExistsException {
       startFunction("add_partition");
       if (parts.size() == 0) {
         return 0;
@@ -2437,7 +2462,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         // Old API assumed all partitions belong to the same table; keep the same assumption
         ret = add_partitions_core(getMS(), parts.get(0).getDbName(),
-            parts.get(0).getTableName(), parts, false).size();
+                parts.get(0).getTableName(), parts, false).size();
         assert ret == parts.size();
       } catch (Exception e) {
         ex = e;
@@ -2459,7 +2484,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public int add_partitions_pspec(final List<PartitionSpec> partSpecs)
-        throws TException {
+            throws TException {
       logInfo("add_partitions_pspec");
 
       if (partSpecs.isEmpty()) {
@@ -2473,15 +2498,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private int add_partitions_pspec_core(
-        RawStore ms, String dbName, String tblName, List<PartitionSpec> partSpecs, boolean ifNotExists)
-        throws TException {
+            RawStore ms, String dbName, String tblName, List<PartitionSpec> partSpecs, boolean ifNotExists)
+            throws TException {
       boolean success = false;
       // Ensures that the list doesn't have dups, and keeps track of directories we have created.
       final Map<PartValEqWrapperLite, Boolean> addedPartitions =
-          Collections.synchronizedMap(new HashMap<PartValEqWrapperLite, Boolean>());
+              Collections.synchronizedMap(new HashMap<PartValEqWrapperLite, Boolean>());
       PartitionSpecProxy partitionSpecProxy = PartitionSpecProxy.Factory.get(partSpecs);
       final PartitionSpecProxy.PartitionIterator partitionIterator = partitionSpecProxy
-          .getPartitionIterator();
+              .getPartitionIterator();
       Table tbl = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
       try {
@@ -2489,7 +2514,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         tbl = ms.getTable(dbName, tblName);
         if (tbl == null) {
           throw new InvalidObjectException("Unable to add partitions because "
-              + "database or table " + dbName + "." + tblName + " does not exist");
+                  + "database or table " + dbName + "." + tblName + " does not exist");
         }
 
         firePreEvent(new PreAddPartitionEvent(tbl, partitionSpecProxy, this));
@@ -2503,7 +2528,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
           if (!part.getTableName().equals(tblName) || !part.getDbName().equals(dbName)) {
             throw new MetaException("Partition does not belong to target table "
-                + dbName + "." + tblName + ": " + part);
+                    + dbName + "." + tblName + ": " + part);
           }
 
           boolean shouldAdd = startAddPartition(ms, part, ifNotExists);
@@ -2562,9 +2587,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.ADD_PARTITION,
-                                                    new AddPartitionEvent(tbl, partitionSpecProxy, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.ADD_PARTITION,
+                          new AddPartitionEvent(tbl, partitionSpecProxy, true, this));
         }
 
         success = ms.commitTransaction();
@@ -2582,20 +2607,20 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ADD_PARTITION,
-                                                new AddPartitionEvent(tbl, partitionSpecProxy, true, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.ADD_PARTITION,
+                  new AddPartitionEvent(tbl, partitionSpecProxy, true, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
     }
 
     private boolean startAddPartition(
-        RawStore ms, Partition part, boolean ifNotExists) throws MetaException, TException {
+            RawStore ms, Partition part, boolean ifNotExists) throws MetaException, TException {
       MetaStoreUtils.validatePartitionNameCharacters(part.getValues(),
-          partitionValidationPattern);
+              partitionValidationPattern);
       boolean doesExist = ms.doesPartitionExist(
-          part.getDbName(), part.getTableName(), part.getValues());
+              part.getDbName(), part.getTableName(), part.getValues());
       if (doesExist && !ifNotExists) {
         throw new AlreadyExistsException("Partition already exists: " + part);
       }
@@ -2609,7 +2634,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      * @return Whether the partition SD location is set to a newly created directory.
      */
     private boolean createLocationForAddedPartition(
-        final Table tbl, final Partition part) throws MetaException {
+            final Table tbl, final Partition part) throws MetaException {
       Path partLocation = null;
       String partLocationStr = null;
       if (part.getSd() != null) {
@@ -2621,7 +2646,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         // a physical table partition (not a view)
         if (tbl.getSd().getLocation() != null) {
           partLocation = new Path(tbl.getSd().getLocation(), Warehouse
-              .makePartName(tbl.getPartitionKeys(), part.getValues()));
+                  .makePartName(tbl.getPartitionKeys(), part.getValues()));
         }
       } else {
         if (tbl.getSd().getLocation() == null) {
@@ -2640,7 +2665,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!wh.isDir(partLocation)) {
           if (!wh.mkdirs(partLocation, true)) {
             throw new MetaException(partLocation
-                + " is not a directory or unable to create one");
+                    + " is not a directory or unable to create one");
           }
           result = true;
         }
@@ -2649,14 +2674,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private void initializeAddedPartition(
-        final Table tbl, final Partition part, boolean madeDir) throws MetaException {
+            final Table tbl, final Partition part, boolean madeDir) throws MetaException {
       initializeAddedPartition(tbl, new PartitionSpecProxy.SimplePartitionWrapperIterator(part), madeDir);
     }
 
     private void initializeAddedPartition(
-        final Table tbl, final PartitionSpecProxy.PartitionIterator part, boolean madeDir) throws MetaException {
+            final Table tbl, final PartitionSpecProxy.PartitionIterator part, boolean madeDir) throws MetaException {
       if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
-          !MetaStoreUtils.isView(tbl)) {
+              !MetaStoreUtils.isView(tbl)) {
         MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir, false);
       }
 
@@ -2664,7 +2689,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       long time = System.currentTimeMillis() / 1000;
       part.setCreateTime((int) time);
       if (part.getParameters() == null ||
-          part.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
+              part.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
         part.putToParameters(hive_metastoreConstants.DDL_TIME, Long.toString(time));
       }
 
@@ -2687,8 +2712,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private Partition add_partition_core(final RawStore ms,
-        final Partition part, final EnvironmentContext envContext)
-        throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+                                         final Partition part, final EnvironmentContext envContext)
+            throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
       boolean success = false;
       Table tbl = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
@@ -2697,7 +2722,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         tbl = ms.getTable(part.getDbName(), part.getTableName());
         if (tbl == null) {
           throw new InvalidObjectException(
-              "Unable to add partition because table or database do not exist");
+                  "Unable to add partition because table or database do not exist");
         }
 
         firePreEvent(new PreAddPartitionEvent(tbl, part, this));
@@ -2719,10 +2744,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.ADD_PARTITION,
-                                                    new AddPartitionEvent(tbl, Arrays.asList(part), true, this),
-                                                    envContext);
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.ADD_PARTITION,
+                          new AddPartitionEvent(tbl, Arrays.asList(part), true, this),
+                          envContext);
 
         }
 
@@ -2736,10 +2761,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ADD_PARTITION,
-                                                new AddPartitionEvent(tbl, Arrays.asList(part), success, this),
-                                                envContext,
-                                                transactionalListenerResponses);
+                  EventType.ADD_PARTITION,
+                  new AddPartitionEvent(tbl, Arrays.asList(part), success, this),
+                  envContext,
+                  transactionalListenerResponses);
 
         }
       }
@@ -2748,17 +2773,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Partition add_partition(final Partition part)
-        throws InvalidObjectException, AlreadyExistsException, MetaException {
+            throws InvalidObjectException, AlreadyExistsException, MetaException {
       return add_partition_with_environment_context(part, null);
     }
 
     @Override
     public Partition add_partition_with_environment_context(
-        final Partition part, EnvironmentContext envContext)
-        throws InvalidObjectException, AlreadyExistsException,
-        MetaException {
+            final Partition part, EnvironmentContext envContext)
+            throws InvalidObjectException, AlreadyExistsException,
+            MetaException {
       startTableFunction("add_partition",
-          part.getDbName(), part.getTableName());
+              part.getDbName(), part.getTableName());
       Partition ret = null;
       Exception ex = null;
       try {
@@ -2782,18 +2807,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Partition exchange_partition(Map<String, String> partitionSpecs,
-        String sourceDbName, String sourceTableName, String destDbName,
-        String destTableName) throws MetaException, NoSuchObjectException,
-        InvalidObjectException, InvalidInputException, TException {
+                                        String sourceDbName, String sourceTableName, String destDbName,
+                                        String destTableName) throws MetaException, NoSuchObjectException,
+            InvalidObjectException, InvalidInputException, TException {
       exchange_partitions(partitionSpecs, sourceDbName, sourceTableName, destDbName, destTableName);
       return new Partition();
     }
 
     @Override
     public List<Partition> exchange_partitions(Map<String, String> partitionSpecs,
-        String sourceDbName, String sourceTableName, String destDbName,
-        String destTableName) throws MetaException, NoSuchObjectException,
-        InvalidObjectException, InvalidInputException, TException {
+                                               String sourceDbName, String sourceTableName, String destDbName,
+                                               String destTableName) throws MetaException, NoSuchObjectException,
+            InvalidObjectException, InvalidInputException, TException {
       boolean success = false;
       boolean pathCreated = false;
       RawStore ms = getMS();
@@ -2801,7 +2826,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Table destinationTable = ms.getTable(destDbName, destTableName);
       Table sourceTable = ms.getTable(sourceDbName, sourceTableName);
       List<String> partVals = MetaStoreUtils.getPvals(sourceTable.getPartitionKeys(),
-          partitionSpecs);
+              partitionSpecs);
       List<String> partValsPresent = new ArrayList<String> ();
       List<FieldSchema> partitionKeysPresent = new ArrayList<FieldSchema> ();
       int i = 0;
@@ -2814,24 +2839,24 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         i++;
       }
       List<Partition> partitionsToExchange = get_partitions_ps(sourceDbName, sourceTableName,
-          partVals, (short)-1);
+              partVals, (short)-1);
       boolean sameColumns = MetaStoreUtils.compareFieldColumns(
-          sourceTable.getSd().getCols(), destinationTable.getSd().getCols());
+              sourceTable.getSd().getCols(), destinationTable.getSd().getCols());
       boolean samePartitions = MetaStoreUtils.compareFieldColumns(
-          sourceTable.getPartitionKeys(), destinationTable.getPartitionKeys());
+              sourceTable.getPartitionKeys(), destinationTable.getPartitionKeys());
       if (!sameColumns || !samePartitions) {
         throw new MetaException("The tables have different schemas." +
-            " Their partitions cannot be exchanged.");
+                " Their partitions cannot be exchanged.");
       }
       Path sourcePath = new Path(sourceTable.getSd().getLocation(),
-          Warehouse.makePartName(partitionKeysPresent, partValsPresent));
+              Warehouse.makePartName(partitionKeysPresent, partValsPresent));
       Path destPath = new Path(destinationTable.getSd().getLocation(),
-          Warehouse.makePartName(partitionKeysPresent, partValsPresent));
+              Warehouse.makePartName(partitionKeysPresent, partValsPresent));
       List<Partition> destPartitions = new ArrayList<Partition>();
 
       Map<String, String> transactionalListenerResponsesForAddPartition = Collections.emptyMap();
       List<Map<String, String>> transactionalListenerResponsesForDropPartition =
-          Lists.newArrayListWithCapacity(partitionsToExchange.size());
+              Lists.newArrayListWithCapacity(partitionsToExchange.size());
 
       try {
         for (Partition partition: partitionsToExchange) {
@@ -2839,17 +2864,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           destPartition.setDbName(destDbName);
           destPartition.setTableName(destinationTable.getTableName());
           Path destPartitionPath = new Path(destinationTable.getSd().getLocation(),
-              Warehouse.makePartName(destinationTable.getPartitionKeys(), partition.getValues()));
+                  Warehouse.makePartName(destinationTable.getPartitionKeys(), partition.getValues()));
           destPartition.getSd().setLocation(destPartitionPath.toString());
           ms.addPartition(destPartition);
           destPartitions.add(destPartition);
           ms.dropPartition(partition.getDbName(), sourceTable.getTableName(),
-            partition.getValues());
+                  partition.getValues());
         }
         Path destParentPath = destPath.getParent();
         if (!wh.isDir(destParentPath)) {
           if (!wh.mkdirs(destParentPath, true)) {
-              throw new MetaException("Unable to create path " + destParentPath);
+            throw new MetaException("Unable to create path " + destParentPath);
           }
         }
         /**
@@ -2863,17 +2888,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponsesForAddPartition =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.ADD_PARTITION,
-                                                    new AddPartitionEvent(destinationTable, destPartitions, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.ADD_PARTITION,
+                          new AddPartitionEvent(destinationTable, destPartitions, true, this));
 
           for (Partition partition : partitionsToExchange) {
             DropPartitionEvent dropPartitionEvent =
-                new DropPartitionEvent(sourceTable, partition, true, true, this);
+                    new DropPartitionEvent(sourceTable, partition, true, true, this);
             transactionalListenerResponsesForDropPartition.add(
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.DROP_PARTITION,
-                                                      dropPartitionEvent));
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.DROP_PARTITION,
+                            dropPartitionEvent));
           }
         }
 
@@ -2890,25 +2915,25 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!listeners.isEmpty()) {
           AddPartitionEvent addPartitionEvent = new AddPartitionEvent(destinationTable, destPartitions, success, this);
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ADD_PARTITION,
-                                                addPartitionEvent,
-                                                null,
-                                                transactionalListenerResponsesForAddPartition);
+                  EventType.ADD_PARTITION,
+                  addPartitionEvent,
+                  null,
+                  transactionalListenerResponsesForAddPartition);
 
           i = 0;
           for (Partition partition : partitionsToExchange) {
             DropPartitionEvent dropPartitionEvent =
-                new DropPartitionEvent(sourceTable, partition, success, true, this);
+                    new DropPartitionEvent(sourceTable, partition, success, true, this);
             Map<String, String> parameters =
-                (transactionalListenerResponsesForDropPartition.size() > i)
-                    ? transactionalListenerResponsesForDropPartition.get(i)
-                    : null;
+                    (transactionalListenerResponsesForDropPartition.size() > i)
+                            ? transactionalListenerResponsesForDropPartition.get(i)
+                            : null;
 
             MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                  EventType.DROP_PARTITION,
-                                                  dropPartitionEvent,
-                                                  null,
-                                                  parameters);
+                    EventType.DROP_PARTITION,
+                    dropPartitionEvent,
+                    null,
+                    parameters);
             i++;
           }
         }
@@ -2916,9 +2941,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private boolean drop_partition_common(RawStore ms, String db_name, String tbl_name,
-      List<String> part_vals, final boolean deleteData, final EnvironmentContext envContext)
-      throws MetaException, NoSuchObjectException, IOException, InvalidObjectException,
-      InvalidInputException {
+                                          List<String> part_vals, final boolean deleteData, final EnvironmentContext envContext)
+            throws MetaException, NoSuchObjectException, IOException, InvalidObjectException,
+            InvalidInputException {
       boolean success = false;
       Path partPath = null;
       Table tbl = null;
@@ -2939,7 +2964,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (part == null) {
           throw new NoSuchObjectException("Partition doesn't exist. "
-              + part_vals);
+                  + part_vals);
         }
 
         isArchived = MetaStoreUtils.isArchived(part);
@@ -2959,10 +2984,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           if (!transactionalListeners.isEmpty()) {
 
             transactionalListenerResponses =
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.DROP_PARTITION,
-                                                      new DropPartitionEvent(tbl, part, true, deleteData, this),
-                                                      envContext);
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.DROP_PARTITION,
+                            new DropPartitionEvent(tbl, part, true, deleteData, this),
+                            envContext);
           }
           success = ms.commitTransaction();
         }
@@ -2992,10 +3017,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.DROP_PARTITION,
-                                                new DropPartitionEvent(tbl, part, success, deleteData, this),
-                                                envContext,
-                                                transactionalListenerResponses);
+                  EventType.DROP_PARTITION,
+                  new DropPartitionEvent(tbl, part, success, deleteData, this),
+                  envContext,
+                  transactionalListenerResponses);
         }
       }
       return true;
@@ -3010,7 +3035,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       //    3.1. User has specified PURGE from the commandline, and if not,
       //    3.2. User has set the table to auto-purge.
       return ((envContext != null) && Boolean.parseBoolean(envContext.getProperties().get("ifPurge")))
-        || (tbl.isSetParameters() && "true".equalsIgnoreCase(tbl.getParameters().get("auto.purge")));
+              || (tbl.isSetParameters() && "true".equalsIgnoreCase(tbl.getParameters().get("auto.purge")));
 
     }
     private void deleteParentRecursive(Path parent, int depth, boolean mustPurge) throws IOException, MetaException {
@@ -3022,10 +3047,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean drop_partition(final String db_name, final String tbl_name,
-        final List<String> part_vals, final boolean deleteData)
-        throws NoSuchObjectException, MetaException, TException {
+                                  final List<String> part_vals, final boolean deleteData)
+            throws NoSuchObjectException, MetaException, TException {
       return drop_partition_with_environment_context(db_name, tbl_name, part_vals, deleteData,
-          null);
+              null);
     }
 
     private static class PathAndPartValSize {
@@ -3039,7 +3064,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public DropPartitionsResult drop_partitions_req(
-        DropPartitionsRequest request) throws MetaException, NoSuchObjectException, TException {
+            DropPartitionsRequest request) throws MetaException, NoSuchObjectException, TException {
       RawStore ms = getMS();
       String dbName = request.getDbName(), tblName = request.getTblName();
       boolean ifExists = request.isSetIfExists() && request.isIfExists();
@@ -3049,7 +3074,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       List<PathAndPartValSize> dirsToDelete = new ArrayList<PathAndPartValSize>();
       List<Path> archToDelete = new ArrayList<Path>();
       EnvironmentContext envContext = request.isSetEnvironmentContext()
-          ? request.getEnvironmentContext() : null;
+              ? request.getEnvironmentContext() : null;
 
       boolean success = false;
       ms.openTransaction();
@@ -3075,7 +3100,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             ++minCount; // At least one partition per expression, if not ifExists
             List<Partition> result = new ArrayList<Partition>();
             boolean hasUnknown = ms.getPartitionsByExpr(
-                dbName, tblName, expr.getExpr(), null, (short)-1, result);
+                    dbName, tblName, expr.getExpr(), null, (short)-1, result);
             if (hasUnknown) {
               // Expr is built by DDLSA, it should only contain part cols and simple ops
               throw new MetaException("Unexpected unknown partitions to drop");
@@ -3085,9 +3110,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             if (!ignoreProtection && expr.isSetPartArchiveLevel()) {
               for (Partition part : parts) {
                 if (MetaStoreUtils.isArchived(part)
-                    && MetaStoreUtils.getArchivingLevel(part) < expr.getPartArchiveLevel()) {
+                        && MetaStoreUtils.getArchivingLevel(part) < expr.getPartArchiveLevel()) {
                   throw new MetaException("Cannot drop a subset of partitions "
-                      + " in an archive, partition " + part);
+                          + " in an archive, partition " + part);
                 }
               }
             }
@@ -3117,7 +3142,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (Partition part : parts) {
           if (!ignoreProtection && !MetaStoreUtils.canDropPartition(tbl, part)) {
             throw new MetaException("Table " + tbl.getTableName()
-                + " Partition " + part + " is protected from being dropped");
+                    + " Partition " + part + " is protected from being dropped");
           }
 
           firePreEvent(new PreDropPartitionEvent(tbl, part, deleteData, this));
@@ -3142,10 +3167,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (parts != null && !transactionalListeners.isEmpty()) {
           for (Partition part : parts) {
             transactionalListenerResponses.add(
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.DROP_PARTITION,
-                                                      new DropPartitionEvent(tbl, part, true, deleteData, this),
-                                                      envContext));
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.DROP_PARTITION,
+                            new DropPartitionEvent(tbl, part, true, deleteData, this),
+                            envContext));
           }
         }
 
@@ -3161,8 +3186,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           ms.rollbackTransaction();
         } else if (deleteData && !isExternal(tbl)) {
           LOG.info( mustPurge?
-                      "dropPartition() will purge partition-directories directly, skipping trash."
-                    :  "dropPartition() will move partition-directories to trash-directory.");
+                  "dropPartition() will purge partition-directories directly, skipping trash."
+                  :  "dropPartition() will move partition-directories to trash-directory.");
           // Archived partitions have har:/to_har_file as their location.
           // The original directory was saved in params
           for (Path path : archToDelete) {
@@ -3183,13 +3208,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           if (parts != null && !listeners.isEmpty()) {
             for (Partition part : parts) {
               Map<String, String> parameters =
-                  (!transactionalListenerResponses.isEmpty()) ? transactionalListenerResponses.get(i) : null;
+                      (!transactionalListenerResponses.isEmpty()) ? transactionalListenerResponses.get(i) : null;
 
               MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                    EventType.DROP_PARTITION,
-                                                    new DropPartitionEvent(tbl, part, success, deleteData, this),
-                                                    envContext,
-                                                    parameters);
+                      EventType.DROP_PARTITION,
+                      new DropPartitionEvent(tbl, part, success, deleteData, this),
+                      envContext,
+                      parameters);
 
               i++;
             }
@@ -3202,20 +3227,20 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         if (!wh.isWritable(dir.getParent())) {
           throw new MetaException("Table partition not deleted since " + dir.getParent()
-              + " is not writable by " + hiveConf.getUser());
+                  + " is not writable by " + hiveConf.getUser());
         }
       } catch (IOException ex) {
         LOG.warn("Error from isWritable", ex);
         throw new MetaException("Table partition not deleted since " + dir.getParent()
-            + " access cannot be checked: " + ex.getMessage());
+                + " access cannot be checked: " + ex.getMessage());
       }
     }
 
     @Override
     public boolean drop_partition_with_environment_context(final String db_name,
-        final String tbl_name, final List<String> part_vals, final boolean deleteData,
-        final EnvironmentContext envContext)
-        throws NoSuchObjectException, MetaException, TException {
+                                                           final String tbl_name, final List<String> part_vals, final boolean deleteData,
+                                                           final EnvironmentContext envContext)
+            throws NoSuchObjectException, MetaException, TException {
       startPartitionFunction("drop_partition", db_name, tbl_name, part_vals);
       LOG.info("Partition values:" + part_vals);
 
@@ -3238,7 +3263,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Partition get_partition(final String db_name, final String tbl_name,
-        final List<String> part_vals) throws MetaException, NoSuchObjectException {
+                                   final List<String> part_vals) throws MetaException, NoSuchObjectException {
       startPartitionFunction("get_partition", db_name, tbl_name, part_vals);
 
       Partition ret = null;
@@ -3277,7 +3302,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         Table t = getMS().getTable(dbName, tblName);
         if (t == null) {
           throw new NoSuchObjectException(dbName + "." + tblName
-              + " table not found");
+                  + " table not found");
         }
         firePreEvent(new PreReadTableEvent(t, this));
       }
@@ -3285,17 +3310,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Partition get_partition_with_auth(final String db_name,
-        final String tbl_name, final List<String> part_vals,
-        final String user_name, final List<String> group_names)
-        throws MetaException, NoSuchObjectException, TException {
+                                             final String tbl_name, final List<String> part_vals,
+                                             final String user_name, final List<String> group_names)
+            throws MetaException, NoSuchObjectException, TException {
       startPartitionFunction("get_partition_with_auth", db_name, tbl_name,
-          part_vals);
+              part_vals);
       fireReadTablePreEvent(db_name, tbl_name);
       Partition ret = null;
       Exception ex = null;
       try {
         ret = getMS().getPartitionWithAuth(db_name, tbl_name, part_vals,
-            user_name, group_names);
+                user_name, group_names);
       } catch (InvalidObjectException e) {
         ex = e;
         throw new NoSuchObjectException(e.getMessage());
@@ -3310,7 +3335,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Partition> get_partitions(final String db_name, final String tbl_name,
-        final short max_parts) throws NoSuchObjectException, MetaException {
+                                          final short max_parts) throws NoSuchObjectException, MetaException {
       startTableFunction("get_partitions", db_name, tbl_name);
       fireReadTablePreEvent(db_name, tbl_name);
       List<Partition> ret = null;
@@ -3336,9 +3361,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Partition> get_partitions_with_auth(final String dbName,
-        final String tblName, final short maxParts, final String userName,
-        final List<String> groupNames) throws NoSuchObjectException,
-        MetaException, TException {
+                                                    final String tblName, final short maxParts, final String userName,
+                                                    final List<String> groupNames) throws NoSuchObjectException,
+            MetaException, TException {
       startTableFunction("get_partitions_with_auth", dbName, tblName);
 
       List<Partition> ret = null;
@@ -3346,7 +3371,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         checkLimitNumberOfPartitionsByFilter(dbName, tblName, NO_FILTER_STRING, maxParts);
         ret = getMS().getPartitionsWithAuth(dbName, tblName, maxParts,
-            userName, groupNames);
+                userName, groupNames);
       } catch (InvalidObjectException e) {
         ex = e;
         throw new NoSuchObjectException(e.getMessage());
@@ -3384,14 +3409,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (partitionRequest > partitionLimit) {
           String configName = ConfVars.METASTORE_LIMIT_PARTITION_REQUEST.varname;
           throw new MetaException(String.format(PARTITION_NUMBER_EXCEED_LIMIT_MSG, partitionRequest,
-              tblName, partitionLimit, configName));
+                  tblName, partitionLimit, configName));
         }
       }
     }
 
     @Override
     public List<PartitionSpec> get_partitions_pspec(final String db_name, final String tbl_name, final int max_parts)
-      throws NoSuchObjectException, MetaException  {
+            throws NoSuchObjectException, MetaException  {
 
       String dbName = db_name.toLowerCase();
       String tableName = tbl_name.toLowerCase();
@@ -3434,9 +3459,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       private String hashCodeKey() {
         return sd.getInputFormat() + "\t"
-            + sd.getOutputFormat() +  "\t"
-            + sd.getSerdeInfo().getSerializationLib() + "\t"
-            + sd.getCols();
+                + sd.getOutputFormat() +  "\t"
+                + sd.getSerdeInfo().getSerializationLib() + "\t"
+                + sd.getCols();
       }
 
       @Override
@@ -3457,14 +3482,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<PartitionSpec> get_partitionspecs_grouped_by_storage_descriptor(Table table, List<Partition> partitions)
-      throws NoSuchObjectException, MetaException {
+            throws NoSuchObjectException, MetaException {
 
       assert is_partition_spec_grouping_enabled(table);
 
       final String tablePath = table.getSd().getLocation();
 
       ImmutableListMultimap<Boolean, Partition> partitionsWithinTableDirectory
-          = Multimaps.index(partitions, new com.google.common.base.Function<Partition, Boolean>() {
+              = Multimaps.index(partitions, new com.google.common.base.Function<Partition, Boolean>() {
 
         @Override
         public Boolean apply(Partition input) {
@@ -3478,7 +3503,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       // based on shared SD properties.
 
       Map<StorageDescriptorKey, List<PartitionWithoutSD>> sdToPartList
-          = new HashMap<StorageDescriptorKey, List<PartitionWithoutSD>>();
+              = new HashMap<StorageDescriptorKey, List<PartitionWithoutSD>>();
 
       if (partitionsWithinTableDirectory.containsKey(true)) {
 
@@ -3486,10 +3511,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (Partition partition : partsWithinTableDir) {
 
           PartitionWithoutSD partitionWithoutSD
-              = new PartitionWithoutSD( partition.getValues(),
-              partition.getCreateTime(),
-              partition.getLastAccessTime(),
-              partition.getSd().getLocation().substring(tablePath.length()), partition.getParameters());
+                  = new PartitionWithoutSD( partition.getValues(),
+                  partition.getCreateTime(),
+                  partition.getLastAccessTime(),
+                  partition.getSd().getLocation().substring(tablePath.length()), partition.getParameters());
 
           StorageDescriptorKey sdKey = new StorageDescriptorKey(partition.getSd());
           if (!sdToPartList.containsKey(sdKey)) {
@@ -3526,7 +3551,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       StorageDescriptor sd = new StorageDescriptor(sdKey.getSd());
       sd.setLocation(table.getSd().getLocation()); // Use table-dir as root-dir.
       PartitionSpecWithSharedSD sharedSDPartSpec =
-          new PartitionSpecWithSharedSD(partitions, sd);
+              new PartitionSpecWithSharedSD(partitions, sd);
 
       PartitionSpec ret = new PartitionSpec();
       ret.setRootPath(sd.getLocation());
@@ -3541,12 +3566,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       Map<String, String> parameters = table.getParameters();
       return parameters.containsKey("hive.hcatalog.partition.spec.grouping.enabled")
-          && parameters.get("hive.hcatalog.partition.spec.grouping.enabled").equalsIgnoreCase("true");
+              && parameters.get("hive.hcatalog.partition.spec.grouping.enabled").equalsIgnoreCase("true");
     }
 
     @Override
     public List<String> get_partition_names(final String db_name, final String tbl_name,
-        final short max_parts) throws MetaException, NoSuchObjectException {
+                                            final short max_parts) throws MetaException, NoSuchObjectException {
       startTableFunction("get_partition_names", db_name, tbl_name);
       fireReadTablePreEvent(db_name, tbl_name);
       List<String> ret = null;
@@ -3568,32 +3593,32 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void alter_partition(final String db_name, final String tbl_name,
-        final Partition new_part)
-        throws InvalidOperationException, MetaException, TException {
+                                final Partition new_part)
+            throws InvalidOperationException, MetaException, TException {
       rename_partition(db_name, tbl_name, null, new_part);
     }
 
     @Override
     public void alter_partition_with_environment_context(final String dbName,
-        final String tableName, final Partition newPartition,
-        final EnvironmentContext envContext)
-        throws InvalidOperationException, MetaException, TException {
+                                                         final String tableName, final Partition newPartition,
+                                                         final EnvironmentContext envContext)
+            throws InvalidOperationException, MetaException, TException {
       rename_partition(dbName, tableName, null,
-          newPartition, envContext);
+              newPartition, envContext);
     }
 
     @Override
     public void rename_partition(final String db_name, final String tbl_name,
-        final List<String> part_vals, final Partition new_part)
-        throws InvalidOperationException, MetaException, TException {
+                                 final List<String> part_vals, final Partition new_part)
+            throws InvalidOperationException, MetaException, TException {
       // Call rename_partition without an environment context.
       rename_partition(db_name, tbl_name, part_vals, new_part, null);
     }
 
     private void rename_partition(final String db_name, final String tbl_name,
-        final List<String> part_vals, final Partition new_part,
-        final EnvironmentContext envContext)
-        throws InvalidOperationException, MetaException, TException {
+                                  final List<String> part_vals, final Partition new_part,
+                                  final EnvironmentContext envContext)
+            throws InvalidOperationException, MetaException, TException {
       startTableFunction("alter_partition", db_name, tbl_name);
 
       if (LOG.isInfoEnabled()) {
@@ -3618,7 +3643,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         firePreEvent(new PreAlterPartitionEvent(db_name, tbl_name, part_vals, new_part, this));
         if (part_vals != null && !part_vals.isEmpty()) {
           MetaStoreUtils.validatePartitionNameCharacters(new_part.getValues(),
-              partitionValidationPattern);
+                  partitionValidationPattern);
         }
 
         oldPart = alterHandler.alterPartition(getMS(), wh, db_name, tbl_name, part_vals, new_part, this);
@@ -3630,9 +3655,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           }
 
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ALTER_PARTITION,
-                                                new AlterPartitionEvent(oldPart, new_part, table, true, this),
-                                                envContext);
+                  EventType.ALTER_PARTITION,
+                  new AlterPartitionEvent(oldPart, new_part, table, true, this),
+                  envContext);
         }
       } catch (InvalidObjectException e) {
         ex = e;
@@ -3658,9 +3683,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void alter_partitions(final String db_name, final String tbl_name,
-        final List<Partition> new_parts)
-        throws InvalidOperationException, MetaException,
-        TException {
+                                 final List<Partition> new_parts)
+            throws InvalidOperationException, MetaException,
+            TException {
       startTableFunction("alter_partitions", db_name, tbl_name);
       if (LOG.isInfoEnabled()) {
         for (Partition tmpPart : new_parts) {
@@ -3694,8 +3719,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
           if (!listeners.isEmpty()) {
             MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                  EventType.ALTER_PARTITION,
-                                                  new AlterPartitionEvent(oldTmpPart, tmpPart, table, true, this));
+                    EventType.ALTER_PARTITION,
+                    new AlterPartitionEvent(oldTmpPart, tmpPart, table, true, this));
           }
         }
       } catch (InvalidObjectException e) {
@@ -3722,12 +3747,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void alter_index(final String dbname, final String base_table_name,
-        final String index_name, final Index newIndex)
-        throws InvalidOperationException, MetaException {
+                            final String index_name, final Index newIndex)
+            throws InvalidOperationException, MetaException {
       startFunction("alter_index", ": db=" + dbname + " base_tbl=" + base_table_name
-          + " idx=" + index_name + " newidx=" + newIndex.getIndexName());
+              + " idx=" + index_name + " newidx=" + newIndex.getIndexName());
       newIndex.putToParameters(hive_metastoreConstants.DDL_TIME, Long.toString(System
-          .currentTimeMillis() / 1000));
+              .currentTimeMillis() / 1000));
       boolean success = false;
       Exception ex = null;
       Index oldIndex = null;
@@ -3740,9 +3765,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         ms.alterIndex(dbname, base_table_name, index_name, newIndex);
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.ALTER_INDEX,
-                                                    new AlterIndexEvent(oldIndex, newIndex, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.ALTER_INDEX,
+                          new AlterIndexEvent(oldIndex, newIndex, true, this));
         }
 
         success = ms.commitTransaction();
@@ -3767,10 +3792,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ALTER_INDEX,
-                                                new AlterIndexEvent(oldIndex, newIndex, success, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.ALTER_INDEX,
+                  new AlterIndexEvent(oldIndex, newIndex, success, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
     }
@@ -3783,39 +3808,39 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void alter_table(final String dbname, final String name,
-        final Table newTable)
-        throws InvalidOperationException, MetaException {
+                            final Table newTable)
+            throws InvalidOperationException, MetaException {
       // Do not set an environment context.
       alter_table_core(dbname,name, newTable, null, false);
     }
 
     @Override
     public void alter_table_with_cascade(final String dbname, final String name,
-        final Table newTable, final boolean cascade)
-        throws InvalidOperationException, MetaException {
+                                         final Table newTable, final boolean cascade)
+            throws InvalidOperationException, MetaException {
       // Do not set an environment context.
       alter_table_core(dbname,name, newTable, null, cascade);
     }
 
     @Override
     public void alter_table_with_environment_context(final String dbname,
-        final String name, final Table newTable,
-        final EnvironmentContext envContext)
-        throws InvalidOperationException, MetaException {
+                                                     final String name, final Table newTable,
+                                                     final EnvironmentContext envContext)
+            throws InvalidOperationException, MetaException {
       alter_table_core(dbname, name, newTable, envContext, false);
     }
 
     private void alter_table_core(final String dbname, final String name, final Table newTable,
-        final EnvironmentContext envContext, final boolean cascade)
-        throws InvalidOperationException, MetaException {
+                                  final EnvironmentContext envContext, final boolean cascade)
+            throws InvalidOperationException, MetaException {
       startFunction("alter_table", ": db=" + dbname + " tbl=" + name
-          + " newtbl=" + newTable.getTableName());
+              + " newtbl=" + newTable.getTableName());
 
       // Update the time if it hasn't been specified.
       if (newTable.getParameters() == null ||
-          newTable.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
+              newTable.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
         newTable.putToParameters(hive_metastoreConstants.DDL_TIME, Long.toString(System
-            .currentTimeMillis() / 1000));
+                .currentTimeMillis() / 1000));
       }
 
       // Adds the missing scheme/authority for the new table location
@@ -3836,9 +3861,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         success = true;
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.ALTER_TABLE,
-                                                new AlterTableEvent(oldt, newTable, true, this),
-                                                envContext);
+                  EventType.ALTER_TABLE,
+                  new AlterTableEvent(oldt, newTable, true, this),
+                  envContext);
         }
       } catch (NoSuchObjectException e) {
         // thrown when the table to be altered does not exist
@@ -3860,7 +3885,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<String> get_tables(final String dbname, final String pattern)
-        throws MetaException {
+            throws MetaException {
       startFunction("get_tables", ": db=" + dbname + " pat=" + pattern);
 
       List<String> ret = null;
@@ -3903,14 +3928,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<FieldSchema> get_fields(String db, String tableName)
-        throws MetaException, UnknownTableException, UnknownDBException {
+            throws MetaException, UnknownTableException, UnknownDBException {
       return get_fields_with_environment_context(db, tableName, null);
     }
 
     @Override
     public List<FieldSchema> get_fields_with_environment_context(String db, String tableName,
-        final EnvironmentContext envContext)
-        throws MetaException, UnknownTableException, UnknownDBException {
+                                                                 final EnvironmentContext envContext)
+            throws MetaException, UnknownTableException, UnknownDBException {
       startFunction("get_fields_with_environment_context", ": db=" + db + "tbl=" + tableName);
       String[] names = tableName.split("\\.");
       String base_table_name = names[0];
@@ -3927,8 +3952,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw new UnknownTableException(e.getMessage());
         }
         if (null == tbl.getSd().getSerdeInfo().getSerializationLib() ||
-          hiveConf.getStringCollection(ConfVars.SERDESUSINGMETASTOREFORSCHEMA.varname).contains
-          (tbl.getSd().getSerdeInfo().getSerializationLib())) {
+                hiveConf.getStringCollection(ConfVars.SERDESUSINGMETASTOREFORSCHEMA.varname).contains
+                        (tbl.getSd().getSerdeInfo().getSerializationLib())) {
           ret = tbl.getSd().getCols();
         } else {
           try {
@@ -3986,7 +4011,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      */
     @Override
     public List<FieldSchema> get_schema(String db, String tableName)
-        throws MetaException, UnknownTableException, UnknownDBException {
+            throws MetaException, UnknownTableException, UnknownDBException {
       return get_schema_with_environment_context(db,tableName, null);
     }
 
@@ -4008,8 +4033,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      */
     @Override
     public List<FieldSchema> get_schema_with_environment_context(String db, String tableName,
-          final EnvironmentContext envContext)
-        throws MetaException, UnknownTableException, UnknownDBException {
+                                                                 final EnvironmentContext envContext)
+            throws MetaException, UnknownTableException, UnknownDBException {
       startFunction("get_schema_with_environment_context", ": db=" + db + "tbl=" + tableName);
       boolean success = false;
       Exception ex = null;
@@ -4067,9 +4092,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      */
     @Override
     public String get_config_value(String name, String defaultValue)
-        throws TException, ConfigValSecurityException {
+            throws TException, ConfigValSecurityException {
       startFunction("get_config_value", ": name=" + name + " defaultValue="
-          + defaultValue);
+              + defaultValue);
       boolean success = false;
       Exception ex = null;
       try {
@@ -4081,7 +4106,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         // i.e. don't allow access to db password
         if (!Pattern.matches("(hive|hdfs|mapred).*", name)) {
           throw new ConfigValSecurityException("For security reasons, the "
-              + "config key " + name + " cannot be accessed");
+                  + "config key " + name + " cannot be accessed");
         }
 
         String toReturn = defaultValue;
@@ -4089,8 +4114,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           toReturn = hiveConf.get(name, defaultValue);
         } catch (RuntimeException e) {
           LOG.error(threadLocalId.get().toString() + ": "
-              + "RuntimeException thrown in get_config_value - msg: "
-              + e.getMessage() + " cause: " + e.getCause());
+                  + "RuntimeException thrown in get_config_value - msg: "
+                  + e.getMessage() + " cause: " + e.getCause());
         }
         success = true;
         return toReturn;
@@ -4111,7 +4136,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<String> getPartValsFromName(RawStore ms, String dbName, String tblName,
-        String partName) throws MetaException, InvalidObjectException {
+                                             String partName) throws MetaException, InvalidObjectException {
       // Unescape the partition name
       LinkedHashMap<String, String> hm = Warehouse.makeSpecFromName(partName);
 
@@ -4120,7 +4145,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Table t = ms.getTable(dbName, tblName);
       if (t == null) {
         throw new InvalidObjectException(dbName + "." + tblName
-            + " table not found");
+                + " table not found");
       }
 
       List<String> partVals = new ArrayList<String>();
@@ -4136,8 +4161,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private Partition get_partition_by_name_core(final RawStore ms, final String db_name,
-        final String tbl_name, final String part_name)
-        throws MetaException, NoSuchObjectException, TException {
+                                                 final String tbl_name, final String part_name)
+            throws MetaException, NoSuchObjectException, TException {
       fireReadTablePreEvent(db_name, tbl_name);
       List<String> partVals = null;
       try {
@@ -4149,17 +4174,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       if (p == null) {
         throw new NoSuchObjectException(db_name + "." + tbl_name
-            + " partition (" + part_name + ") not found");
+                + " partition (" + part_name + ") not found");
       }
       return p;
     }
 
     @Override
     public Partition get_partition_by_name(final String db_name, final String tbl_name,
-        final String part_name) throws MetaException, NoSuchObjectException, TException {
+                                           final String part_name) throws MetaException, NoSuchObjectException, TException {
 
       startFunction("get_partition_by_name", ": db=" + db_name + " tbl="
-          + tbl_name + " part=" + part_name);
+              + tbl_name + " part=" + part_name);
       Partition ret = null;
       Exception ex = null;
       try {
@@ -4175,17 +4200,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Partition append_partition_by_name(final String db_name, final String tbl_name,
-        final String part_name) throws InvalidObjectException,
-        AlreadyExistsException, MetaException, TException {
+                                              final String part_name) throws InvalidObjectException,
+            AlreadyExistsException, MetaException, TException {
       return append_partition_by_name_with_environment_context(db_name, tbl_name, part_name, null);
     }
 
     @Override
     public Partition append_partition_by_name_with_environment_context(final String db_name,
-        final String tbl_name, final String part_name, final EnvironmentContext env_context)
-        throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+                                                                       final String tbl_name, final String part_name, final EnvironmentContext env_context)
+            throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
       startFunction("append_partition_by_name", ": db=" + db_name + " tbl="
-          + tbl_name + " part=" + part_name);
+              + tbl_name + " part=" + part_name);
 
       Partition ret = null;
       Exception ex = null;
@@ -4213,9 +4238,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private boolean drop_partition_by_name_core(final RawStore ms, final String db_name,
-        final String tbl_name, final String part_name, final boolean deleteData,
-        final EnvironmentContext envContext) throws NoSuchObjectException, MetaException,
-        TException, IOException, InvalidObjectException, InvalidInputException {
+                                                final String tbl_name, final String part_name, final boolean deleteData,
+                                                final EnvironmentContext envContext) throws NoSuchObjectException, MetaException,
+            TException, IOException, InvalidObjectException, InvalidInputException {
 
       List<String> partVals = null;
       try {
@@ -4229,25 +4254,25 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean drop_partition_by_name(final String db_name, final String tbl_name,
-        final String part_name, final boolean deleteData) throws NoSuchObjectException,
-        MetaException, TException {
+                                          final String part_name, final boolean deleteData) throws NoSuchObjectException,
+            MetaException, TException {
       return drop_partition_by_name_with_environment_context(db_name, tbl_name, part_name,
-          deleteData, null);
+              deleteData, null);
     }
 
     @Override
     public boolean drop_partition_by_name_with_environment_context(final String db_name,
-        final String tbl_name, final String part_name, final boolean deleteData,
-        final EnvironmentContext envContext) throws NoSuchObjectException,
-        MetaException, TException {
+                                                                   final String tbl_name, final String part_name, final boolean deleteData,
+                                                                   final EnvironmentContext envContext) throws NoSuchObjectException,
+            MetaException, TException {
       startFunction("drop_partition_by_name", ": db=" + db_name + " tbl="
-          + tbl_name + " part=" + part_name);
+              + tbl_name + " part=" + part_name);
 
       boolean ret = false;
       Exception ex = null;
       try {
         ret = drop_partition_by_name_core(getMS(), db_name, tbl_name,
-            part_name, deleteData, envContext);
+                part_name, deleteData, envContext);
       } catch (IOException e) {
         ex = e;
         throw new MetaException(e.getMessage());
@@ -4263,15 +4288,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Partition> get_partitions_ps(final String db_name,
-        final String tbl_name, final List<String> part_vals,
-        final short max_parts) throws MetaException, TException, NoSuchObjectException {
+                                             final String tbl_name, final List<String> part_vals,
+                                             final short max_parts) throws MetaException, TException, NoSuchObjectException {
       startPartitionFunction("get_partitions_ps", db_name, tbl_name, part_vals);
 
       List<Partition> ret = null;
       Exception ex = null;
       try {
         ret = get_partitions_ps_with_auth(db_name, tbl_name, part_vals,
-            max_parts, null, null);
+                max_parts, null, null);
       } catch (Exception e) {
         ex = e;
         rethrowException(e);
@@ -4284,17 +4309,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Partition> get_partitions_ps_with_auth(final String db_name,
-        final String tbl_name, final List<String> part_vals,
-        final short max_parts, final String userName,
-        final List<String> groupNames) throws MetaException, TException, NoSuchObjectException {
+                                                       final String tbl_name, final List<String> part_vals,
+                                                       final short max_parts, final String userName,
+                                                       final List<String> groupNames) throws MetaException, TException, NoSuchObjectException {
       startPartitionFunction("get_partitions_ps_with_auth", db_name, tbl_name,
-          part_vals);
+              part_vals);
       fireReadTablePreEvent(db_name, tbl_name);
       List<Partition> ret = null;
       Exception ex = null;
       try {
         ret = getMS().listPartitionsPsWithAuth(db_name, tbl_name, part_vals, max_parts,
-            userName, groupNames);
+                userName, groupNames);
       } catch (InvalidObjectException e) {
         ex = e;
         throw new MetaException(e.getMessage());
@@ -4309,8 +4334,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<String> get_partition_names_ps(final String db_name,
-        final String tbl_name, final List<String> part_vals, final short max_parts)
-        throws MetaException, TException, NoSuchObjectException {
+                                               final String tbl_name, final List<String> part_vals, final short max_parts)
+            throws MetaException, TException, NoSuchObjectException {
       startPartitionFunction("get_partitions_names_ps", db_name, tbl_name, part_vals);
       fireReadTablePreEvent(db_name, tbl_name);
       List<String> ret = null;
@@ -4328,7 +4353,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<String> partition_name_to_vals(String part_name)
-        throws MetaException, TException {
+            throws MetaException, TException {
       if (part_name.length() == 0) {
         return new ArrayList<String>();
       }
@@ -4340,7 +4365,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Map<String, String> partition_name_to_spec(String part_name) throws MetaException,
-        TException {
+            TException {
       if (part_name.length() == 0) {
         return new HashMap<String, String>();
       }
@@ -4349,7 +4374,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Index add_index(final Index newIndex, final Table indexTable)
-        throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+            throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
       startFunction("add_index", ": " + newIndex.toString() + " " + indexTable.toString());
       Index ret = null;
       Exception ex = null;
@@ -4376,10 +4401,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private Index add_index_core(final RawStore ms, final Index index, final Table indexTable)
-        throws InvalidObjectException, AlreadyExistsException, MetaException {
+            throws InvalidObjectException, AlreadyExistsException, MetaException {
       boolean success = false, indexTableCreated = false;
       String[] qualified =
-          MetaStoreUtils.getQualifiedName(index.getDbName(), index.getIndexTableName());
+              MetaStoreUtils.getQualifiedName(index.getDbName(), index.getIndexTableName());
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
       try {
         ms.openTransaction();
@@ -4387,7 +4412,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         Index old_index = null;
         try {
           old_index = get_index_by_name(index.getDbName(), index
-              .getOrigTableName(), index.getIndexName());
+                  .getOrigTableName(), index.getIndexName());
         } catch (Exception e) {
         }
         if (old_index != null) {
@@ -4396,7 +4421,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         Table origTbl = ms.getTable(index.getDbName(), index.getOrigTableName());
         if (origTbl == null) {
           throw new InvalidObjectException(
-              "Unable to add index because database or the orginal table do not exist");
+                  "Unable to add index because database or the orginal table do not exist");
         }
 
         // set create time
@@ -4409,7 +4434,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           }
           if (indexTbl != null) {
             throw new InvalidObjectException(
-                "Unable to add index because index table already exists");
+                    "Unable to add index because index table already exists");
           }
           this.create_table(indexTable);
           indexTableCreated = true;
@@ -4420,9 +4445,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (ms.addIndex(index)) {
           if (!transactionalListeners.isEmpty()) {
             transactionalListenerResponses =
-                MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                      EventType.CREATE_INDEX,
-                                                      new AddIndexEvent(index, true, this));
+                    MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                            EventType.CREATE_INDEX,
+                            new AddIndexEvent(index, true, this));
           }
         }
 
@@ -4441,26 +4466,26 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.CREATE_INDEX,
-                                                new AddIndexEvent(index, success, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.CREATE_INDEX,
+                  new AddIndexEvent(index, success, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
     }
 
     @Override
     public boolean drop_index_by_name(final String dbName, final String tblName,
-        final String indexName, final boolean deleteData) throws NoSuchObjectException,
-        MetaException, TException {
+                                      final String indexName, final boolean deleteData) throws NoSuchObjectException,
+            MetaException, TException {
       startFunction("drop_index_by_name", ": db=" + dbName + " tbl="
-          + tblName + " index=" + indexName);
+              + tblName + " index=" + indexName);
 
       boolean ret = false;
       Exception ex = null;
       try {
         ret = drop_index_by_name_core(getMS(), dbName, tblName,
-            indexName, deleteData);
+                indexName, deleteData);
       } catch (IOException e) {
         ex = e;
         throw new MetaException(e.getMessage());
@@ -4475,9 +4500,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private boolean drop_index_by_name_core(final RawStore ms,
-        final String dbName, final String tblName,
-        final String indexName, final boolean deleteData) throws NoSuchObjectException,
-        MetaException, TException, IOException, InvalidObjectException, InvalidInputException {
+                                            final String dbName, final String tblName,
+                                            final String indexName, final boolean deleteData) throws NoSuchObjectException,
+            MetaException, TException, IOException, InvalidObjectException, InvalidInputException {
       boolean success = false;
       Index index = null;
       Path tblPath = null;
@@ -4501,25 +4526,25 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             tblPath = new Path(tbl.getSd().getLocation());
             if (!wh.isWritable(tblPath.getParent())) {
               throw new MetaException("Index table metadata not deleted since " +
-                  tblPath.getParent() + " is not writable by " +
-                  hiveConf.getUser());
+                      tblPath.getParent() + " is not writable by " +
+                      hiveConf.getUser());
             }
           }
 
           // Drop the partitions and get a list of partition locations which need to be deleted
           partPaths = dropPartitionsAndGetLocations(ms, qualified[0], qualified[1], tblPath,
-              tbl.getPartitionKeys(), deleteData);
+                  tbl.getPartitionKeys(), deleteData);
           if (!ms.dropTable(qualified[0], qualified[1])) {
             throw new MetaException("Unable to drop underlying data table "
-                + qualified[0] + "." + qualified[1] + " for index " + indexName);
+                    + qualified[0] + "." + qualified[1] + " for index " + indexName);
           }
         }
 
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.DROP_INDEX,
-                                                    new DropIndexEvent(index, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.DROP_INDEX,
+                          new DropIndexEvent(index, true, this));
         }
 
         success = ms.commitTransaction();
@@ -4534,10 +4559,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         // Skip the event listeners if the index is NULL
         if (index != null && !listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.DROP_INDEX,
-                                                new DropIndexEvent(index, success, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.DROP_INDEX,
+                  new DropIndexEvent(index, success, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
       return success;
@@ -4545,11 +4570,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Index get_index_by_name(final String dbName, final String tblName,
-        final String indexName) throws MetaException, NoSuchObjectException,
-        TException {
+                                   final String indexName) throws MetaException, NoSuchObjectException,
+            TException {
 
       startFunction("get_index_by_name", ": db=" + dbName + " tbl="
-          + tblName + " index=" + indexName);
+              + tblName + " index=" + indexName);
 
       Index ret = null;
       Exception ex = null;
@@ -4565,20 +4590,20 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private Index get_index_by_name_core(final RawStore ms, final String db_name,
-        final String tbl_name, final String index_name)
-        throws MetaException, NoSuchObjectException, TException {
+                                         final String tbl_name, final String index_name)
+            throws MetaException, NoSuchObjectException, TException {
       Index index = ms.getIndex(db_name, tbl_name, index_name);
 
       if (index == null) {
         throw new NoSuchObjectException(db_name + "." + tbl_name
-            + " index=" + index_name + " not found");
+                + " index=" + index_name + " not found");
       }
       return index;
     }
 
     @Override
     public List<String> get_index_names(final String dbName, final String tblName,
-        final short maxIndexes) throws MetaException, TException {
+                                        final short maxIndexes) throws MetaException, TException {
       startTableFunction("get_index_names", dbName, tblName);
 
       List<String> ret = null;
@@ -4602,8 +4627,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Index> get_indexes(final String dbName, final String tblName,
-        final short maxIndexes) throws NoSuchObjectException, MetaException,
-        TException {
+                                   final short maxIndexes) throws NoSuchObjectException, MetaException,
+            TException {
       startTableFunction("get_indexes", dbName, tblName);
 
       List<Index> ret = null;
@@ -4640,18 +4665,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public ColumnStatistics get_table_column_statistics(String dbName, String tableName,
-      String colName) throws NoSuchObjectException, MetaException, TException,
-      InvalidInputException, InvalidObjectException
+                                                        String colName) throws NoSuchObjectException, MetaException, TException,
+            InvalidInputException, InvalidObjectException
     {
       dbName = dbName.toLowerCase();
       tableName = tableName.toLowerCase();
       colName = colName.toLowerCase();
       startFunction("get_column_statistics_by_table", ": db=" + dbName + " table=" + tableName +
-                    " column=" + colName);
+              " column=" + colName);
       ColumnStatistics statsObj = null;
       try {
         statsObj = getMS().getTableColumnStatistics(
-            dbName, tableName, Lists.newArrayList(colName));
+                dbName, tableName, Lists.newArrayList(colName));
         assert statsObj.getStatsObjSize() <= 1;
         return statsObj;
       } finally {
@@ -4661,7 +4686,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public TableStatsResult get_table_statistics_req(TableStatsRequest request)
-        throws MetaException, NoSuchObjectException, TException {
+            throws MetaException, NoSuchObjectException, TException {
       String dbName = request.getDbName().toLowerCase();
       String tblName = request.getTblName().toLowerCase();
       startFunction("get_table_statistics_req", ": db=" + dbName + " table=" + tblName);
@@ -4673,7 +4698,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         ColumnStatistics cs = getMS().getTableColumnStatistics(dbName, tblName, lowerCaseColNames);
         result = new TableStatsResult(
-            cs == null ? Lists.<ColumnStatisticsObj>newArrayList() : cs.getStatsObj());
+                cs == null ? Lists.<ColumnStatisticsObj>newArrayList() : cs.getStatsObj());
       } finally {
         endFunction("get_table_statistics_req", result == null, null, tblName);
       }
@@ -4682,20 +4707,20 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public ColumnStatistics get_partition_column_statistics(String dbName, String tableName,
-      String partName, String colName) throws NoSuchObjectException, MetaException,
-      InvalidInputException, TException, InvalidObjectException {
+                                                            String partName, String colName) throws NoSuchObjectException, MetaException,
+            InvalidInputException, TException, InvalidObjectException {
       dbName = dbName.toLowerCase();
       tableName = tableName.toLowerCase();
       colName = colName.toLowerCase();
       String convertedPartName = lowerCaseConvertPartName(partName);
       startFunction("get_column_statistics_by_partition",
               ": db=" + dbName + " table=" + tableName
-              + " partition=" + convertedPartName + " column=" + colName);
+                      + " partition=" + convertedPartName + " column=" + colName);
       ColumnStatistics statsObj = null;
 
       try {
         List<ColumnStatistics> list = getMS().getPartitionColumnStatistics(dbName, tableName,
-            Lists.newArrayList(convertedPartName), Lists.newArrayList(colName));
+                Lists.newArrayList(convertedPartName), Lists.newArrayList(colName));
         if (list.isEmpty()) return null;
         if (list.size() != 1) {
           throw new MetaException(list.size() + " statistics for single column and partition");
@@ -4709,7 +4734,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public PartitionsStatsResult get_partitions_statistics_req(PartitionsStatsRequest request)
-        throws MetaException, NoSuchObjectException, TException {
+            throws MetaException, NoSuchObjectException, TException {
       String dbName = request.getDbName().toLowerCase();
       String tblName = request.getTblName().toLowerCase();
       startFunction("get_partitions_statistics_req", ": db=" + dbName + " table=" + tblName);
@@ -4725,9 +4750,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       try {
         List<ColumnStatistics> stats = getMS().getPartitionColumnStatistics(
-            dbName, tblName, lowerCasePartNames, lowerCaseColNames);
+                dbName, tblName, lowerCasePartNames, lowerCaseColNames);
         Map<String, List<ColumnStatisticsObj>> map =
-            new HashMap<String, List<ColumnStatisticsObj>>();
+                new HashMap<String, List<ColumnStatisticsObj>>();
         for (ColumnStatistics stat : stats) {
           map.put(stat.getStatsDesc().getPartName(), stat.getStatsObj());
         }
@@ -4740,8 +4765,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean update_table_column_statistics(ColumnStatistics colStats)
-      throws NoSuchObjectException,InvalidObjectException,MetaException,TException,
-      InvalidInputException
+            throws NoSuchObjectException,InvalidObjectException,MetaException,TException,
+            InvalidInputException
     {
       String dbName = null;
       String tableName = null;
@@ -4758,17 +4783,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       List<ColumnStatisticsObj> statsObjs =  colStats.getStatsObj();
 
       startFunction("write_column_statistics", ":  db=" + dbName
-          + " table=" + tableName);
+              + " table=" + tableName);
       for (ColumnStatisticsObj statsObj:statsObjs) {
         colName = statsObj.getColName().toLowerCase();
         statsObj.setColName(colName);
         statsObj.setColType(statsObj.getColType().toLowerCase());
       }
 
-     colStats.setStatsDesc(statsDesc);
-     colStats.setStatsObj(statsObjs);
+      colStats.setStatsDesc(statsDesc);
+      colStats.setStatsObj(statsObjs);
 
-     boolean ret = false;
+      boolean ret = false;
 
       try {
         ret = getMS().updateTableColumnStatistics(colStats);
@@ -4780,8 +4805,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean update_partition_column_statistics(ColumnStatistics colStats)
-      throws NoSuchObjectException,InvalidObjectException,MetaException,TException,
-      InvalidInputException
+            throws NoSuchObjectException,InvalidObjectException,MetaException,TException,
+            InvalidInputException
     {
 
       String dbName = null;
@@ -4804,8 +4829,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       List<ColumnStatisticsObj> statsObjs =  colStats.getStatsObj();
 
       startFunction("write_partition_column_statistics",
-          ":  db=" + dbName + " table=" + tableName
-              + " part=" + partName);
+              ":  db=" + dbName + " table=" + tableName
+                      + " part=" + partName);
       for (ColumnStatisticsObj statsObj:statsObjs) {
         colName = statsObj.getColName().toLowerCase();
         statsObj.setColName(colName);
@@ -4819,7 +4844,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       try {
         List<String> partVals = getPartValsFromName(getMS(), dbName,
-            tableName, partName);
+                tableName, partName);
         ret = getMS().updatePartitionColumnStatistics(colStats, partVals);
         return ret;
       } finally {
@@ -4829,8 +4854,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean delete_partition_column_statistics(String dbName, String tableName,
-      String partName, String colName) throws NoSuchObjectException, MetaException,
-      InvalidObjectException, TException, InvalidInputException
+                                                      String partName, String colName) throws NoSuchObjectException, MetaException,
+            InvalidObjectException, TException, InvalidInputException
     {
       dbName = dbName.toLowerCase();
       tableName = tableName.toLowerCase();
@@ -4839,14 +4864,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       String convertedPartName = lowerCaseConvertPartName(partName);
       startFunction("delete_column_statistics_by_partition",": db=" + dbName
-          + " table=" + tableName + " partition=" + convertedPartName
-          + " column=" + colName);
+              + " table=" + tableName + " partition=" + convertedPartName
+              + " column=" + colName);
       boolean ret = false;
 
       try {
         List<String> partVals = getPartValsFromName(getMS(), dbName, tableName, convertedPartName);
         ret = getMS().deletePartitionColumnStatistics(dbName, tableName,
-                                                      convertedPartName, partVals, colName);
+                convertedPartName, partVals, colName);
       } finally {
         endFunction("delete_column_statistics_by_partition", ret != false, null, tableName);
       }
@@ -4855,9 +4880,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean delete_table_column_statistics(String dbName, String tableName, String colName)
-      throws NoSuchObjectException, MetaException, InvalidObjectException, TException,
-      InvalidInputException
-   {
+            throws NoSuchObjectException, MetaException, InvalidObjectException, TException,
+            InvalidInputException
+    {
       dbName = dbName.toLowerCase();
       tableName = tableName.toLowerCase();
 
@@ -4865,7 +4890,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         colName = colName.toLowerCase();
       }
       startFunction("delete_column_statistics_by_table", ": db=" + dbName
-          + " table=" + tableName + " column=" + colName);
+              + " table=" + tableName + " column=" + colName);
 
       boolean ret = false;
       try {
@@ -4874,12 +4899,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         endFunction("delete_column_statistics_by_table", ret != false, null, tableName);
       }
       return ret;
-   }
+    }
 
     @Override
     public List<Partition> get_partitions_by_filter(final String dbName,
-        final String tblName, final String filter, final short maxParts)
-        throws MetaException, NoSuchObjectException, TException {
+                                                    final String tblName, final String filter, final short maxParts)
+            throws MetaException, NoSuchObjectException, TException {
       startTableFunction("get_partitions_by_filter", dbName, tblName);
       fireReadTablePreEvent(dbName, tblName);
       List<Partition> ret = null;
@@ -4898,8 +4923,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<PartitionSpec> get_part_specs_by_filter(final String dbName,
-        final String tblName, final String filter, final int maxParts)
-        throws MetaException, NoSuchObjectException, TException {
+                                                        final String tblName, final String filter, final int maxParts)
+            throws MetaException, NoSuchObjectException, TException {
 
       startTableFunction("get_partitions_by_filter_pspec", dbName, tblName);
 
@@ -4929,7 +4954,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public PartitionsByExprResult get_partitions_by_expr(
-        PartitionsByExprRequest req) throws TException {
+            PartitionsByExprRequest req) throws TException {
       String dbName = req.getDbName(), tblName = req.getTblName();
       startTableFunction("get_partitions_by_expr", dbName, tblName);
       fireReadTablePreEvent(dbName, tblName);
@@ -4939,7 +4964,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         checkLimitNumberOfPartitionsByExpr(dbName, tblName, req.getExpr(), UNLIMITED_MAX_PARTITIONS);
         List<Partition> partitions = new LinkedList<Partition>();
         boolean hasUnknownPartitions = getMS().getPartitionsByExpr(dbName, tblName,
-            req.getExpr(), req.getDefaultPartitionName(), req.getMaxParts(), partitions);
+                req.getExpr(), req.getDefaultPartitionName(), req.getMaxParts(), partitions);
         ret = new PartitionsByExprResult(partitions, hasUnknownPartitions);
       } catch (Exception e) {
         ex = e;
@@ -4951,7 +4976,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private void rethrowException(Exception e)
-        throws MetaException, NoSuchObjectException, TException {
+            throws MetaException, NoSuchObjectException, TException {
       // TODO: Both of these are TException, why do we need these separate clauses?
       if (e instanceof MetaException) {
         throw (MetaException) e;
@@ -4984,8 +5009,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     public int get_num_partitions_by_expr(final String dbName,
-                                            final String tblName, final byte[] expr)
-        throws TException {
+                                          final String tblName, final byte[] expr)
+            throws TException {
       startTableFunction("get_num_partitions_by_expr", dbName, tblName);
 
       int ret = -1;
@@ -5003,8 +5028,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Partition> get_partitions_by_names(final String dbName,
-        final String tblName, final List<String> partNames)
-        throws MetaException, NoSuchObjectException, TException {
+                                                   final String tblName, final List<String> partNames)
+            throws MetaException, NoSuchObjectException, TException {
 
       startTableFunction("get_partitions_by_names", dbName, tblName);
       fireReadTablePreEvent(dbName, tblName);
@@ -5023,24 +5048,24 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public PrincipalPrivilegeSet get_privilege_set(HiveObjectRef hiveObject,
-        String userName, List<String> groupNames) throws MetaException,
-        TException {
+                                                   String userName, List<String> groupNames) throws MetaException,
+            TException {
       firePreEvent(new PreAuthorizationCallEvent(this));
       if (hiveObject.getObjectType() == HiveObjectType.COLUMN) {
         String partName = getPartName(hiveObject);
         return this.get_column_privilege_set(hiveObject.getDbName(), hiveObject
-            .getObjectName(), partName, hiveObject.getColumnName(), userName,
-            groupNames);
+                        .getObjectName(), partName, hiveObject.getColumnName(), userName,
+                groupNames);
       } else if (hiveObject.getObjectType() == HiveObjectType.PARTITION) {
         String partName = getPartName(hiveObject);
         return this.get_partition_privilege_set(hiveObject.getDbName(),
-            hiveObject.getObjectName(), partName, userName, groupNames);
+                hiveObject.getObjectName(), partName, userName, groupNames);
       } else if (hiveObject.getObjectType() == HiveObjectType.DATABASE) {
         return this.get_db_privilege_set(hiveObject.getDbName(), userName,
-            groupNames);
+                groupNames);
       } else if (hiveObject.getObjectType() == HiveObjectType.TABLE) {
         return this.get_table_privilege_set(hiveObject.getDbName(), hiveObject
-            .getObjectName(), userName, groupNames);
+                .getObjectName(), userName, groupNames);
       } else if (hiveObject.getObjectType() == HiveObjectType.GLOBAL) {
         return this.get_user_privilege_set(userName, groupNames);
       }
@@ -5053,9 +5078,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       if (partValue != null && partValue.size() > 0) {
         try {
           Table table = get_table_core(hiveObject.getDbName(), hiveObject
-              .getObjectName());
+                  .getObjectName());
           partName = Warehouse
-              .makePartName(table.getPartitionKeys(), partValue);
+                  .makePartName(table.getPartitionKeys(), partValue);
         } catch (NoSuchObjectException e) {
           throw new MetaException(e.getMessage());
         }
@@ -5064,15 +5089,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private PrincipalPrivilegeSet get_column_privilege_set(final String dbName,
-        final String tableName, final String partName, final String columnName,
-        final String userName, final List<String> groupNames) throws MetaException,
-        TException {
+                                                           final String tableName, final String partName, final String columnName,
+                                                           final String userName, final List<String> groupNames) throws MetaException,
+            TException {
       incrementCounter("get_column_privilege_set");
 
       PrincipalPrivilegeSet ret = null;
       try {
         ret = getMS().getColumnPrivilegeSet(
-            dbName, tableName, partName, columnName, userName, groupNames);
+                dbName, tableName, partName, columnName, userName, groupNames);
       } catch (MetaException e) {
         throw e;
       } catch (Exception e) {
@@ -5082,8 +5107,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private PrincipalPrivilegeSet get_db_privilege_set(final String dbName,
-        final String userName, final List<String> groupNames) throws MetaException,
-        TException {
+                                                       final String userName, final List<String> groupNames) throws MetaException,
+            TException {
       incrementCounter("get_db_privilege_set");
 
       PrincipalPrivilegeSet ret = null;
@@ -5098,15 +5123,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private PrincipalPrivilegeSet get_partition_privilege_set(
-        final String dbName, final String tableName, final String partName,
-        final String userName, final List<String> groupNames)
-        throws MetaException, TException {
+            final String dbName, final String tableName, final String partName,
+            final String userName, final List<String> groupNames)
+            throws MetaException, TException {
       incrementCounter("get_partition_privilege_set");
 
       PrincipalPrivilegeSet ret = null;
       try {
         ret = getMS().getPartitionPrivilegeSet(dbName, tableName, partName,
-            userName, groupNames);
+                userName, groupNames);
       } catch (MetaException e) {
         throw e;
       } catch (Exception e) {
@@ -5116,14 +5141,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private PrincipalPrivilegeSet get_table_privilege_set(final String dbName,
-        final String tableName, final String userName,
-        final List<String> groupNames) throws MetaException, TException {
+                                                          final String tableName, final String userName,
+                                                          final List<String> groupNames) throws MetaException, TException {
       incrementCounter("get_table_privilege_set");
 
       PrincipalPrivilegeSet ret = null;
       try {
         ret = getMS().getTablePrivilegeSet(dbName, tableName, userName,
-            groupNames);
+                groupNames);
       } catch (MetaException e) {
         throw e;
       } catch (Exception e) {
@@ -5134,14 +5159,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean grant_role(final String roleName,
-        final String principalName, final PrincipalType principalType,
-        final String grantor, final PrincipalType grantorType, final boolean grantOption)
-        throws MetaException, TException {
+                              final String principalName, final PrincipalType principalType,
+                              final String grantor, final PrincipalType grantorType, final boolean grantOption)
+            throws MetaException, TException {
       incrementCounter("add_role_member");
       firePreEvent(new PreAuthorizationCallEvent(this));
       if (PUBLIC.equals(roleName)) {
         throw new MetaException("No user can be added to " + PUBLIC +". Since all users implictly"
-        + " belong to " + PUBLIC + " role.");
+                + " belong to " + PUBLIC + " role.");
       }
       Boolean ret = null;
       try {
@@ -5151,8 +5176,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           //check if this grant statement will end up creating a cycle
           if(isNewRoleAParent(principalName, roleName)){
             throw new MetaException("Cannot grant role " + principalName + " to " + roleName +
-                " as " + roleName + " already belongs to the role " + principalName +
-                ". (no cycles allowed)");
+                    " as " + roleName + " already belongs to the role " + principalName +
+                    ". (no cycles allowed)");
           }
         }
         ret = ms.grantRole(role, principalName, principalType, grantor, grantorType, grantOption);
@@ -5189,7 +5214,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Role> list_roles(final String principalName,
-        final PrincipalType principalType) throws MetaException, TException {
+                                 final PrincipalType principalType) throws MetaException, TException {
       incrementCounter("list_roles");
       firePreEvent(new PreAuthorizationCallEvent(this));
       List<Role> result = new ArrayList<Role>();
@@ -5214,11 +5239,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean create_role(final Role role)
-        throws MetaException, TException {
+            throws MetaException, TException {
       incrementCounter("create_role");
       firePreEvent(new PreAuthorizationCallEvent(this));
       if (PUBLIC.equals(role.getRoleName())) {
-         throw new MetaException(PUBLIC + " role implictly exists. It can't be created.");
+        throw new MetaException(PUBLIC + " role implictly exists. It can't be created.");
       }
       Boolean ret = null;
       try {
@@ -5233,7 +5258,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean drop_role(final String roleName)
-        throws MetaException, TException {
+            throws MetaException, TException {
       incrementCounter("drop_role");
       firePreEvent(new PreAuthorizationCallEvent(this));
       if (ADMIN.equals(roleName) || PUBLIC.equals(roleName)) {
@@ -5267,7 +5292,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean grant_privileges(final PrivilegeBag privileges) throws MetaException,
-        TException {
+            TException {
       incrementCounter("grant_privileges");
       firePreEvent(new PreAuthorizationCallEvent(this));
       Boolean ret = null;
@@ -5283,12 +5308,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean revoke_role(final String roleName, final String userName,
-        final PrincipalType principalType) throws MetaException, TException {
+                               final PrincipalType principalType) throws MetaException, TException {
       return revoke_role(roleName, userName, principalType, false);
     }
 
     private boolean revoke_role(final String roleName, final String userName,
-        final PrincipalType principalType, boolean grantOption) throws MetaException, TException {
+                                final PrincipalType principalType, boolean grantOption) throws MetaException, TException {
       incrementCounter("remove_role_member");
       firePreEvent(new PreAuthorizationCallEvent(this));
       if (PUBLIC.equals(roleName)) {
@@ -5309,7 +5334,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public GrantRevokeRoleResponse grant_revoke_role(GrantRevokeRoleRequest request)
-        throws MetaException, org.apache.thrift.TException {
+            throws MetaException, org.apache.thrift.TException {
       GrantRevokeRoleResponse response = new GrantRevokeRoleResponse();
       boolean grantOption = false;
       if (request.isSetGrantOption()) {
@@ -5318,14 +5343,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       switch (request.getRequestType()) {
         case GRANT: {
           boolean result = grant_role(request.getRoleName(),
-              request.getPrincipalName(), request.getPrincipalType(),
-              request.getGrantor(), request.getGrantorType(), grantOption);
+                  request.getPrincipalName(), request.getPrincipalType(),
+                  request.getGrantor(), request.getGrantorType(), grantOption);
           response.setSuccess(result);
           break;
         }
         case REVOKE: {
           boolean result = revoke_role(request.getRoleName(), request.getPrincipalName(),
-              request.getPrincipalType(), grantOption);
+                  request.getPrincipalType(), grantOption);
           response.setSuccess(result);
           break;
         }
@@ -5338,7 +5363,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public GrantRevokePrivilegeResponse grant_revoke_privileges(GrantRevokePrivilegeRequest request)
-        throws MetaException, org.apache.thrift.TException {
+            throws MetaException, org.apache.thrift.TException {
       GrantRevokePrivilegeResponse response = new GrantRevokePrivilegeResponse();
       switch (request.getRequestType()) {
         case GRANT: {
@@ -5364,12 +5389,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean revoke_privileges(final PrivilegeBag privileges)
-        throws MetaException, TException {
+            throws MetaException, TException {
       return revoke_privileges(privileges, false);
     }
 
     public boolean revoke_privileges(final PrivilegeBag privileges, boolean grantOption)
-        throws MetaException, TException {
+            throws MetaException, TException {
       incrementCounter("revoke_privileges");
       firePreEvent(new PreAuthorizationCallEvent(this));
       Boolean ret = null;
@@ -5384,7 +5409,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private PrincipalPrivilegeSet get_user_privilege_set(final String userName,
-        final List<String> groupNames) throws MetaException, TException {
+                                                         final List<String> groupNames) throws MetaException, TException {
       incrementCounter("get_user_privilege_set");
       PrincipalPrivilegeSet ret = null;
       try {
@@ -5399,8 +5424,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<HiveObjectPrivilege> list_privileges(String principalName,
-        PrincipalType principalType, HiveObjectRef hiveObject)
-        throws MetaException, TException {
+                                                     PrincipalType principalType, HiveObjectRef hiveObject)
+            throws MetaException, TException {
       firePreEvent(new PreAuthorizationCallEvent(this));
       if (hiveObject.getObjectType() == null) {
         return getAllPrivileges(principalName, principalType);
@@ -5410,31 +5435,31 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
       if (hiveObject.getObjectType() == HiveObjectType.DATABASE) {
         return list_db_privileges(principalName, principalType, hiveObject
-            .getDbName());
+                .getDbName());
       }
       if (hiveObject.getObjectType() == HiveObjectType.TABLE) {
         return list_table_privileges(principalName, principalType,
-            hiveObject.getDbName(), hiveObject.getObjectName());
+                hiveObject.getDbName(), hiveObject.getObjectName());
       }
       if (hiveObject.getObjectType() == HiveObjectType.PARTITION) {
         return list_partition_privileges(principalName, principalType,
-            hiveObject.getDbName(), hiveObject.getObjectName(), hiveObject
-            .getPartValues());
+                hiveObject.getDbName(), hiveObject.getObjectName(), hiveObject
+                        .getPartValues());
       }
       if (hiveObject.getObjectType() == HiveObjectType.COLUMN) {
         if (hiveObject.getPartValues() == null || hiveObject.getPartValues().isEmpty()) {
           return list_table_column_privileges(principalName, principalType,
-              hiveObject.getDbName(), hiveObject.getObjectName(), hiveObject.getColumnName());
+                  hiveObject.getDbName(), hiveObject.getObjectName(), hiveObject.getColumnName());
         }
         return list_partition_column_privileges(principalName, principalType,
-            hiveObject.getDbName(), hiveObject.getObjectName(), hiveObject
-            .getPartValues(), hiveObject.getColumnName());
+                hiveObject.getDbName(), hiveObject.getObjectName(), hiveObject
+                        .getPartValues(), hiveObject.getColumnName());
       }
       return null;
     }
 
     private List<HiveObjectPrivilege> getAllPrivileges(String principalName,
-        PrincipalType principalType) throws TException {
+                                                       PrincipalType principalType) throws TException {
       List<HiveObjectPrivilege> privs = new ArrayList<HiveObjectPrivilege>();
       privs.addAll(list_global_privileges(principalName, principalType));
       privs.addAll(list_db_privileges(principalName, principalType, null));
@@ -5442,14 +5467,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       privs.addAll(list_partition_privileges(principalName, principalType, null, null, null));
       privs.addAll(list_table_column_privileges(principalName, principalType, null, null, null));
       privs.addAll(list_partition_column_privileges(principalName, principalType,
-          null, null, null, null));
+              null, null, null, null));
       return privs;
     }
 
     private List<HiveObjectPrivilege> list_table_column_privileges(
-        final String principalName, final PrincipalType principalType,
-        final String dbName, final String tableName, final String columnName)
-        throws MetaException, TException {
+            final String principalName, final PrincipalType principalType,
+            final String dbName, final String tableName, final String columnName)
+            throws MetaException, TException {
       incrementCounter("list_table_column_privileges");
 
       try {
@@ -5460,8 +5485,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           return getMS().listTableColumnGrantsAll(dbName, tableName, columnName);
         }
         List<MTableColumnPrivilege> mTableCols = getMS()
-            .listPrincipalTableColumnGrants(principalName, principalType,
-                dbName, tableName, columnName);
+                .listPrincipalTableColumnGrants(principalName, principalType,
+                        dbName, tableName, columnName);
         if (mTableCols.isEmpty()) {
           return Collections.emptyList();
         }
@@ -5469,13 +5494,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (int i = 0; i < mTableCols.size(); i++) {
           MTableColumnPrivilege sCol = mTableCols.get(i);
           HiveObjectRef objectRef = new HiveObjectRef(
-              HiveObjectType.COLUMN, dbName, tableName, null, sCol.getColumnName());
+                  HiveObjectType.COLUMN, dbName, tableName, null, sCol.getColumnName());
           HiveObjectPrivilege secObj = new HiveObjectPrivilege(
-              objectRef, sCol.getPrincipalName(), principalType,
-              new PrivilegeGrantInfo(sCol.getPrivilege(), sCol
-                  .getCreateTime(), sCol.getGrantor(), PrincipalType
-                  .valueOf(sCol.getGrantorType()), sCol
-                  .getGrantOption()));
+                  objectRef, sCol.getPrincipalName(), principalType,
+                  new PrivilegeGrantInfo(sCol.getPrivilege(), sCol
+                          .getCreateTime(), sCol.getGrantor(), PrincipalType
+                          .valueOf(sCol.getGrantorType()), sCol
+                          .getGrantOption()));
           result.add(secObj);
         }
         return result;
@@ -5487,9 +5512,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<HiveObjectPrivilege> list_partition_column_privileges(
-        final String principalName, final PrincipalType principalType,
-        final String dbName, final String tableName, final List<String> partValues,
-        final String columnName) throws MetaException, TException {
+            final String principalName, final PrincipalType principalType,
+            final String dbName, final String tableName, final List<String> partValues,
+            final String columnName) throws MetaException, TException {
       incrementCounter("list_partition_column_privileges");
 
       try {
@@ -5502,8 +5527,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           return getMS().listPartitionColumnGrantsAll(dbName, tableName, partName, columnName);
         }
         List<MPartitionColumnPrivilege> mPartitionCols = getMS().listPrincipalPartitionColumnGrants(
-            principalName,
-            principalType, dbName, tableName, partName, columnName);
+                principalName,
+                principalType, dbName, tableName, partName, columnName);
         if (mPartitionCols.isEmpty()) {
           return Collections.emptyList();
         }
@@ -5511,12 +5536,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (int i = 0; i < mPartitionCols.size(); i++) {
           MPartitionColumnPrivilege sCol = mPartitionCols.get(i);
           HiveObjectRef objectRef = new HiveObjectRef(
-              HiveObjectType.COLUMN, dbName, tableName, partValues, sCol.getColumnName());
+                  HiveObjectType.COLUMN, dbName, tableName, partValues, sCol.getColumnName());
           HiveObjectPrivilege secObj = new HiveObjectPrivilege(objectRef,
-              sCol.getPrincipalName(), principalType,
-              new PrivilegeGrantInfo(sCol.getPrivilege(), sCol
-                  .getCreateTime(), sCol.getGrantor(), PrincipalType
-                  .valueOf(sCol.getGrantorType()), sCol.getGrantOption()));
+                  sCol.getPrincipalName(), principalType,
+                  new PrivilegeGrantInfo(sCol.getPrivilege(), sCol
+                          .getCreateTime(), sCol.getGrantor(), PrincipalType
+                          .valueOf(sCol.getGrantorType()), sCol.getGrantOption()));
           result.add(secObj);
         }
         return result;
@@ -5528,8 +5553,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<HiveObjectPrivilege> list_db_privileges(final String principalName,
-        final PrincipalType principalType, final String dbName)
-        throws MetaException, TException {
+                                                         final PrincipalType principalType, final String dbName)
+            throws MetaException, TException {
       incrementCounter("list_security_db_grant");
 
       try {
@@ -5540,7 +5565,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           return getMS().listDBGrantsAll(dbName);
         }
         List<MDBPrivilege> mDbs = getMS().listPrincipalDBGrants(
-            principalName, principalType, dbName);
+                principalName, principalType, dbName);
         if (mDbs.isEmpty()) {
           return Collections.<HiveObjectPrivilege>emptyList();
         }
@@ -5548,12 +5573,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (int i = 0; i < mDbs.size(); i++) {
           MDBPrivilege sDB = mDbs.get(i);
           HiveObjectRef objectRef = new HiveObjectRef(
-              HiveObjectType.DATABASE, dbName, null, null, null);
+                  HiveObjectType.DATABASE, dbName, null, null, null);
           HiveObjectPrivilege secObj = new HiveObjectPrivilege(objectRef,
-              sDB.getPrincipalName(), principalType,
-              new PrivilegeGrantInfo(sDB.getPrivilege(), sDB
-                  .getCreateTime(), sDB.getGrantor(), PrincipalType
-                  .valueOf(sDB.getGrantorType()), sDB.getGrantOption()));
+                  sDB.getPrincipalName(), principalType,
+                  new PrivilegeGrantInfo(sDB.getPrivilege(), sDB
+                          .getCreateTime(), sDB.getGrantor(), PrincipalType
+                          .valueOf(sDB.getGrantorType()), sDB.getGrantOption()));
           result.add(secObj);
         }
         return result;
@@ -5565,9 +5590,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<HiveObjectPrivilege> list_partition_privileges(
-        final String principalName, final PrincipalType principalType,
-        final String dbName, final String tableName, final List<String> partValues)
-        throws MetaException, TException {
+            final String principalName, final PrincipalType principalType,
+            final String dbName, final String tableName, final List<String> partValues)
+            throws MetaException, TException {
       incrementCounter("list_security_partition_grant");
 
       try {
@@ -5580,7 +5605,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           return getMS().listPartitionGrantsAll(dbName, tableName, partName);
         }
         List<MPartitionPrivilege> mParts = getMS().listPrincipalPartitionGrants(
-            principalName, principalType, dbName, tableName, partName);
+                principalName, principalType, dbName, tableName, partName);
         if (mParts.isEmpty()) {
           return Collections.<HiveObjectPrivilege> emptyList();
         }
@@ -5588,13 +5613,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (int i = 0; i < mParts.size(); i++) {
           MPartitionPrivilege sPart = mParts.get(i);
           HiveObjectRef objectRef = new HiveObjectRef(
-              HiveObjectType.PARTITION, dbName, tableName, partValues, null);
+                  HiveObjectType.PARTITION, dbName, tableName, partValues, null);
           HiveObjectPrivilege secObj = new HiveObjectPrivilege(objectRef,
-              sPart.getPrincipalName(), principalType,
-              new PrivilegeGrantInfo(sPart.getPrivilege(), sPart
-                  .getCreateTime(), sPart.getGrantor(), PrincipalType
-                  .valueOf(sPart.getGrantorType()), sPart
-                  .getGrantOption()));
+                  sPart.getPrincipalName(), principalType,
+                  new PrivilegeGrantInfo(sPart.getPrivilege(), sPart
+                          .getCreateTime(), sPart.getGrantor(), PrincipalType
+                          .valueOf(sPart.getGrantorType()), sPart
+                          .getGrantOption()));
 
           result.add(secObj);
         }
@@ -5607,9 +5632,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<HiveObjectPrivilege> list_table_privileges(
-        final String principalName, final PrincipalType principalType,
-        final String dbName, final String tableName) throws MetaException,
-        TException {
+            final String principalName, final PrincipalType principalType,
+            final String dbName, final String tableName) throws MetaException,
+            TException {
       incrementCounter("list_security_table_grant");
 
       try {
@@ -5620,7 +5645,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           return getMS().listTableGrantsAll(dbName, tableName);
         }
         List<MTablePrivilege> mTbls = getMS()
-            .listAllTableGrants(principalName, principalType, dbName, tableName);
+                .listAllTableGrants(principalName, principalType, dbName, tableName);
         if (mTbls.isEmpty()) {
           return Collections.<HiveObjectPrivilege> emptyList();
         }
@@ -5628,12 +5653,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (int i = 0; i < mTbls.size(); i++) {
           MTablePrivilege sTbl = mTbls.get(i);
           HiveObjectRef objectRef = new HiveObjectRef(
-              HiveObjectType.TABLE, dbName, tableName, null, null);
+                  HiveObjectType.TABLE, dbName, tableName, null, null);
           HiveObjectPrivilege secObj = new HiveObjectPrivilege(objectRef,
-              sTbl.getPrincipalName(), principalType,
-              new PrivilegeGrantInfo(sTbl.getPrivilege(), sTbl.getCreateTime(), sTbl
-                  .getGrantor(), PrincipalType.valueOf(sTbl
-                  .getGrantorType()), sTbl.getGrantOption()));
+                  sTbl.getPrincipalName(), principalType,
+                  new PrivilegeGrantInfo(sTbl.getPrivilege(), sTbl.getCreateTime(), sTbl
+                          .getGrantor(), PrincipalType.valueOf(sTbl
+                          .getGrantorType()), sTbl.getGrantOption()));
           result.add(secObj);
         }
         return result;
@@ -5645,8 +5670,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private List<HiveObjectPrivilege> list_global_privileges(
-        final String principalName, final PrincipalType principalType)
-        throws MetaException, TException {
+            final String principalName, final PrincipalType principalType)
+            throws MetaException, TException {
       incrementCounter("list_security_user_grant");
 
       try {
@@ -5654,7 +5679,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           return getMS().listGlobalGrantsAll();
         }
         List<MGlobalPrivilege> mUsers = getMS().listPrincipalGlobalGrants(
-            principalName, principalType);
+                principalName, principalType);
         if (mUsers.isEmpty()) {
           return Collections.<HiveObjectPrivilege> emptyList();
         }
@@ -5662,12 +5687,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (int i = 0; i < mUsers.size(); i++) {
           MGlobalPrivilege sUsr = mUsers.get(i);
           HiveObjectRef objectRef = new HiveObjectRef(
-              HiveObjectType.GLOBAL, null, null, null, null);
+                  HiveObjectType.GLOBAL, null, null, null, null);
           HiveObjectPrivilege secUser = new HiveObjectPrivilege(
-              objectRef, sUsr.getPrincipalName(), principalType,
-              new PrivilegeGrantInfo(sUsr.getPrivilege(), sUsr
-                  .getCreateTime(), sUsr.getGrantor(), PrincipalType
-                  .valueOf(sUsr.getGrantorType()), sUsr.getGrantOption()));
+                  objectRef, sUsr.getPrincipalName(), principalType,
+                  new PrivilegeGrantInfo(sUsr.getPrivilege(), sUsr
+                          .getCreateTime(), sUsr.getGrantor(), PrincipalType
+                          .valueOf(sUsr.getGrantorType()), sUsr.getGrantOption()));
           result.add(secUser);
         }
         return result;
@@ -5680,7 +5705,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void cancel_delegation_token(String token_str_form)
-        throws MetaException, TException {
+            throws MetaException, TException {
       startFunction("cancel_delegation_token");
       boolean success = false;
       Exception ex = null;
@@ -5706,7 +5731,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public long renew_delegation_token(String token_str_form)
-        throws MetaException, TException {
+            throws MetaException, TException {
       startFunction("renew_delegation_token");
       Long ret = null;
       Exception ex = null;
@@ -5732,15 +5757,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public String get_delegation_token(String token_owner,
-        String renewer_kerberos_principal_name)
-        throws MetaException, TException {
+                                       String renewer_kerberos_principal_name)
+            throws MetaException, TException {
       startFunction("get_delegation_token");
       String ret = null;
       Exception ex = null;
       try {
         ret =
-            HiveMetaStore.getDelegationToken(token_owner,
-                renewer_kerberos_principal_name);
+                HiveMetaStore.getDelegationToken(token_owner,
+                        renewer_kerberos_principal_name);
       } catch (IOException e) {
         ex = e;
         throw new MetaException(e.getMessage());
@@ -5764,9 +5789,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void markPartitionForEvent(final String db_name, final String tbl_name,
-        final Map<String, String> partName, final PartitionEventType evtType) throws
-        MetaException, TException, NoSuchObjectException, UnknownDBException,
-        UnknownTableException, InvalidPartitionException, UnknownPartitionException {
+                                      final Map<String, String> partName, final PartitionEventType evtType) throws
+            MetaException, TException, NoSuchObjectException, UnknownDBException,
+            UnknownTableException, InvalidPartitionException, UnknownPartitionException {
 
       Table tbl = null;
       Exception ex = null;
@@ -5821,9 +5846,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public boolean isPartitionMarkedForEvent(final String db_name, final String tbl_name,
-        final Map<String, String> partName, final PartitionEventType evtType) throws
-        MetaException, NoSuchObjectException, UnknownDBException, UnknownTableException,
-        TException, UnknownPartitionException, InvalidPartitionException {
+                                             final Map<String, String> partName, final PartitionEventType evtType) throws
+            MetaException, NoSuchObjectException, UnknownDBException, UnknownTableException,
+            TException, UnknownPartitionException, InvalidPartitionException {
 
       startPartitionFunction("isPartitionMarkedForEvent", db_name, tbl_name, partName);
       Boolean ret = null;
@@ -5849,7 +5874,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw newMetaException(original);
         }
       } finally {
-                endFunction("isPartitionMarkedForEvent", ret != null, ex, tbl_name);
+        endFunction("isPartitionMarkedForEvent", ret != null, ex, tbl_name);
       }
 
       return ret;
@@ -5857,14 +5882,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<String> set_ugi(String username, List<String> groupNames) throws MetaException,
-        TException {
+            TException {
       Collections.addAll(groupNames, username);
       return groupNames;
     }
 
     @Override
     public boolean partition_name_has_valid_characters(List<String> part_vals,
-        boolean throw_exception) throws TException, MetaException {
+                                                       boolean throw_exception) throws TException, MetaException {
       startFunction("partition_name_has_valid_characters");
       boolean ret = false;
       Exception ex = null;
@@ -5874,7 +5899,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           ret = true;
         } else {
           ret = MetaStoreUtils.partitionNameHasValidCharacters(part_vals,
-              partitionValidationPattern);
+                  partitionValidationPattern);
         }
       } catch (Exception e) {
         if (e instanceof MetaException) {
@@ -5909,8 +5934,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void create_function(Function func) throws AlreadyExistsException,
-        InvalidObjectException, MetaException, NoSuchObjectException,
-        TException {
+            InvalidObjectException, MetaException, NoSuchObjectException,
+            TException {
       validateFunctionInfo(func);
       boolean success = false;
       RawStore ms = getMS();
@@ -5925,7 +5950,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         Function existingFunc = ms.getFunction(func.getDbName(), func.getFunctionName());
         if (existingFunc != null) {
           throw new AlreadyExistsException(
-              "Function " + func.getFunctionName() + " already exists");
+                  "Function " + func.getFunctionName() + " already exists");
         }
 
         long time = System.currentTimeMillis() / 1000;
@@ -5933,9 +5958,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         ms.createFunction(func);
         if (!transactionalListeners.isEmpty()) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.CREATE_FUNCTION,
-                                                    new CreateFunctionEvent(func, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.CREATE_FUNCTION,
+                          new CreateFunctionEvent(func, true, this));
         }
 
         success = ms.commitTransaction();
@@ -5946,18 +5971,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (!listeners.isEmpty()) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.CREATE_FUNCTION,
-                                                new CreateFunctionEvent(func, success, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.CREATE_FUNCTION,
+                  new CreateFunctionEvent(func, success, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
     }
 
     @Override
     public void drop_function(String dbName, String funcName)
-        throws NoSuchObjectException, MetaException,
-        InvalidObjectException, InvalidInputException {
+            throws NoSuchObjectException, MetaException,
+            InvalidObjectException, InvalidInputException {
       boolean success = false;
       Function func = null;
       RawStore ms = getMS();
@@ -5972,9 +5997,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         ms.dropFunction(dbName, funcName);
         if (transactionalListeners.size() > 0) {
           transactionalListenerResponses =
-              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
-                                                    EventType.DROP_FUNCTION,
-                                                    new DropFunctionEvent(func, true, this));
+                  MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                          EventType.DROP_FUNCTION,
+                          new DropFunctionEvent(func, true, this));
         }
 
         success = ms.commitTransaction();
@@ -5985,17 +6010,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (listeners.size() > 0) {
           MetaStoreListenerNotifier.notifyEvent(listeners,
-                                                EventType.DROP_FUNCTION,
-                                                new DropFunctionEvent(func, success, this),
-                                                null,
-                                                transactionalListenerResponses);
+                  EventType.DROP_FUNCTION,
+                  new DropFunctionEvent(func, success, this),
+                  null,
+                  transactionalListenerResponses);
         }
       }
     }
 
     @Override
     public void alter_function(String dbName, String funcName, Function newFunc)
-        throws InvalidOperationException, MetaException, TException {
+            throws InvalidOperationException, MetaException, TException {
       validateFunctionInfo(newFunc);
       boolean success = false;
       RawStore ms = getMS();
@@ -6012,7 +6037,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<String> get_functions(String dbName, String pattern)
-        throws MetaException {
+            throws MetaException {
       startFunction("get_functions", ": db=" + dbName + " pat=" + pattern);
 
       RawStore ms = getMS();
@@ -6053,7 +6078,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public Function get_function(String dbName, String funcName)
-        throws MetaException, NoSuchObjectException, TException {
+            throws MetaException, NoSuchObjectException, TException {
       startFunction("get_function", ": " + dbName + "." + funcName);
 
       RawStore ms = getMS();
@@ -6064,7 +6089,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         func = ms.getFunction(dbName, funcName);
         if (func == null) {
           throw new NoSuchObjectException(
-              "Function " + dbName + "." + funcName + " does not exist");
+                  "Function " + dbName + "." + funcName + " does not exist");
         }
       } catch (NoSuchObjectException e) {
         ex = e;
@@ -6103,25 +6128,25 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void commit_txn(CommitTxnRequest rqst)
-        throws NoSuchTxnException, TxnAbortedException, TException {
+            throws NoSuchTxnException, TxnAbortedException, TException {
       getTxnHandler().commitTxn(rqst);
     }
 
     @Override
     public LockResponse lock(LockRequest rqst)
-        throws NoSuchTxnException, TxnAbortedException, TException {
+            throws NoSuchTxnException, TxnAbortedException, TException {
       return getTxnHandler().lock(rqst);
     }
 
     @Override
     public LockResponse check_lock(CheckLockRequest rqst)
-        throws NoSuchTxnException, TxnAbortedException, NoSuchLockException, TException {
+            throws NoSuchTxnException, TxnAbortedException, NoSuchLockException, TException {
       return getTxnHandler().checkLock(rqst);
     }
 
     @Override
     public void unlock(UnlockRequest rqst)
-        throws NoSuchLockException, TxnOpenException, TException {
+            throws NoSuchLockException, TxnOpenException, TException {
       getTxnHandler().unlock(rqst);
     }
 
@@ -6132,13 +6157,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void heartbeat(HeartbeatRequest ids)
-        throws NoSuchLockException, NoSuchTxnException, TxnAbortedException, TException {
+            throws NoSuchLockException, NoSuchTxnException, TxnAbortedException, TException {
       getTxnHandler().heartbeat(ids);
     }
 
     @Override
     public HeartbeatTxnRangeResponse heartbeat_txn_range(HeartbeatTxnRangeRequest rqst)
-      throws TException {
+            throws TException {
       return getTxnHandler().heartbeatTxnRange(rqst);
     }
 
@@ -6154,7 +6179,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public GetPrincipalsInRoleResponse get_principals_in_role(GetPrincipalsInRoleRequest request)
-        throws MetaException, TException {
+            throws MetaException, TException {
 
       incrementCounter("get_principals_in_role");
       firePreEvent(new PreAuthorizationCallEvent(this));
@@ -6175,7 +6200,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public GetRoleGrantsForPrincipalResponse get_role_grants_for_principal(
-        GetRoleGrantsForPrincipalRequest request) throws MetaException, TException {
+            GetRoleGrantsForPrincipalRequest request) throws MetaException, TException {
 
       incrementCounter("get_role_grants_for_principal");
       firePreEvent(new PreAuthorizationCallEvent(this));
@@ -6206,16 +6231,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       if (roleMaps != null) {
         for (MRoleMap roleMap : roleMaps) {
           RolePrincipalGrant rolePrinGrant = new RolePrincipalGrant(
-              roleMap.getRole().getRoleName(),
-              roleMap.getPrincipalName(),
-              PrincipalType.valueOf(roleMap.getPrincipalType()),
-              roleMap.getGrantOption(),
-              roleMap.getAddTime(),
-              roleMap.getGrantor(),
-              // no grantor type for public role, hence the null check
-              roleMap.getGrantorType() == null ? null
-                  : PrincipalType.valueOf(roleMap.getGrantorType())
-              );
+                  roleMap.getRole().getRoleName(),
+                  roleMap.getPrincipalName(),
+                  PrincipalType.valueOf(roleMap.getPrincipalType()),
+                  roleMap.getGrantOption(),
+                  roleMap.getAddTime(),
+                  roleMap.getGrantor(),
+                  // no grantor type for public role, hence the null check
+                  roleMap.getGrantorType() == null ? null
+                          : PrincipalType.valueOf(roleMap.getGrantorType())
+          );
           rolePrinGrantList.add(rolePrinGrant);
         }
       }
@@ -6224,11 +6249,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public AggrStats get_aggr_stats_for(PartitionsStatsRequest request)
-        throws NoSuchObjectException, MetaException, TException {
+            throws NoSuchObjectException, MetaException, TException {
       String dbName = request.getDbName().toLowerCase();
       String tblName = request.getTblName().toLowerCase();
       startFunction("get_aggr_stats_for", ": db=" + request.getDbName()
-          + " table=" + request.getTblName());
+              + " table=" + request.getTblName());
 
       List<String> lowerCaseColNames = new ArrayList<String>(request.getColNames().size());
       for (String colName : request.getColNames()) {
@@ -6242,18 +6267,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       try {
         aggrStats = new AggrStats(getMS().get_aggr_stats_for(dbName, tblName, lowerCasePartNames,
-            lowerCaseColNames));
+                lowerCaseColNames));
         return aggrStats;
       } finally {
-          endFunction("get_aggr_stats_for", aggrStats == null, null, request.getTblName());
+        endFunction("get_aggr_stats_for", aggrStats == null, null, request.getTblName());
       }
 
     }
 
     @Override
     public boolean set_aggr_stats_for(SetPartitionsStatsRequest request)
-        throws NoSuchObjectException, InvalidObjectException, MetaException, InvalidInputException,
-        TException {
+            throws NoSuchObjectException, InvalidObjectException, MetaException, InvalidInputException,
+            TException {
       boolean ret = true;
       for (ColumnStatistics colStats : request.getColStats()) {
         ret = ret && update_partition_column_statistics(colStats);
@@ -6263,7 +6288,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public NotificationEventResponse get_next_notification(NotificationEventRequest rqst)
-        throws TException {
+            throws TException {
       RawStore ms = getMS();
       return ms.getNextNotification(rqst);
     }
@@ -6286,8 +6311,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       switch (rqst.getData().getSetField()) {
         case INSERT_DATA:
           InsertEvent event = new InsertEvent(rqst.getDbName(), rqst.getTableName(),
-              rqst.getPartitionVals(), rqst.getData().getInsertData().getFilesAdded(),
-              rqst.isSuccessful(), this);
+                  rqst.getPartitionVals(), rqst.getData().getInsertData().getFilesAdded(),
+                  rqst.isSuccessful(), this);
           for (MetaStoreEventListener transactionalListener : transactionalListeners) {
             transactionalListener.onInsert(event);
           }
@@ -6300,7 +6325,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         default:
           throw new TException("Event type " + rqst.getData().getSetField().toString() +
-              " not currently supported.");
+                  " not currently supported.");
       }
     }
 
@@ -6316,17 +6341,17 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   }
 
   public static IHMSHandler newRetryingHMSHandler(IHMSHandler baseHandler, HiveConf hiveConf)
-      throws MetaException {
+          throws MetaException {
     return newRetryingHMSHandler(baseHandler, hiveConf, false);
   }
 
   public static IHMSHandler newRetryingHMSHandler(IHMSHandler baseHandler, HiveConf hiveConf,
-      boolean local) throws MetaException {
+                                                  boolean local) throws MetaException {
     return RetryingHMSHandler.getProxy(hiveConf, baseHandler, local);
   }
 
   public static Iface newRetryingHMSHandler(String name, HiveConf conf, boolean local)
-      throws MetaException {
+          throws MetaException {
     HMSHandler baseHandler = new HiveMetaStore.HMSHandler(name, conf, false);
     return RetryingHMSHandler.getProxy(conf, baseHandler, local);
   }
@@ -6338,7 +6363,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    *          the token in string form
    */
   public static void cancelDelegationToken(String tokenStrForm
-      ) throws IOException {
+  ) throws IOException {
     saslServer.cancelDelegationToken(tokenStrForm);
   }
 
@@ -6349,7 +6374,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    *          the designated renewer
    */
   public static String getDelegationToken(String owner, String renewer)
-      throws IOException, InterruptedException {
+          throws IOException, InterruptedException {
     return saslServer.getDelegationToken(owner, renewer);
   }
 
@@ -6367,7 +6392,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    *          the token in string form
    */
   public static long renewDelegationToken(String tokenStrForm
-      ) throws IOException {
+  ) throws IOException {
     return saslServer.renewDelegationToken(tokenStrForm);
   }
 
@@ -6384,11 +6409,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       // -p port
       OPTIONS.addOption(OptionBuilder
-          .hasArg()
-          .withArgName("port")
-          .withDescription("Hive Metastore port number, default:"
-              + DEFAULT_HIVE_METASTORE_PORT)
-          .create('p'));
+              .hasArg()
+              .withArgName("port")
+              .withDescription("Hive Metastore port number, default:"
+                      + DEFAULT_HIVE_METASTORE_PORT)
+              .create('p'));
 
     }
 
@@ -6401,8 +6426,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       if (args.length > 0) {
         // complain about the deprecated syntax -- but still run
         System.err.println(
-            "This usage has been deprecated, consider using the new command "
-                + "line syntax (run with -h to see usage information)");
+                "This usage has been deprecated, consider using the new command "
+                        + "line syntax (run with -h to see usage information)");
 
         port = new Integer(args[0]);
       }
@@ -6446,7 +6471,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     try {
-      String msg = "Starting hive metastore on port " + cli.port;
+      String msg = "Fuck yzz Starting hive metastore on port " + cli.port;
       HMSHandler.LOG.info(msg);
       if (cli.isVerbose()) {
         System.err.println(msg);
@@ -6473,7 +6498,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               MetricsFactory.close();
             } catch (Exception e) {
               LOG.error("error in Metrics deinit: " + e.getClass().getName() + " "
-                + e.getMessage(), e);
+                      + e.getMessage(), e);
             }
           }
         }
@@ -6486,7 +6511,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         } catch (Exception e) {
           // log exception, but ignore inability to start
           LOG.error("error in Metrics init: " + e.getClass().getName() + " "
-            + e.getMessage(), e);
+                  + e.getMessage(), e);
         }
       }
 
@@ -6495,11 +6520,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       AtomicBoolean startedServing = new AtomicBoolean();
       startMetaStoreThreads(conf, startLock, startCondition, startedServing);
       startMetaStore(cli.port, ShimLoader.getHadoopThriftAuthBridge(), conf, startLock,
-          startCondition, startedServing);
+              startCondition, startedServing);
     } catch (Throwable t) {
       // Catch the exception, log it and rethrow it.
       HMSHandler.LOG
-          .error("Metastore Thrift Server threw an exception...", t);
+              .error("Metastore Thrift Server threw an exception...", t);
       throw t;
     }
   }
@@ -6512,7 +6537,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    * @throws Throwable
    */
   public static void startMetaStore(int port, HadoopThriftAuthBridge bridge)
-      throws Throwable {
+          throws Throwable {
     startMetaStore(port, bridge, new HiveConf(HMSHandler.class), null, null, null);
   }
 
@@ -6538,8 +6563,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    * @throws Throwable
    */
   public static void startMetaStore(int port, HadoopThriftAuthBridge bridge,
-      HiveConf conf, Lock startLock, Condition startCondition,
-      AtomicBoolean startedServing) throws Throwable {
+                                    HiveConf conf, Lock startLock, Condition startCondition,
+                                    AtomicBoolean startedServing) throws Throwable {
     try {
       isMetaStoreRemote = true;
       // Server will create new threads up to max as necessary. After an idle
@@ -6566,7 +6591,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         inputProtoFactory = new TBinaryProtocol.Factory(true, true, maxMessageSize, maxMessageSize);
       }
       HMSHandler baseHandler = new HiveMetaStore.HMSHandler("new db based metaserver", conf,
-          false);
+              false);
       IHMSHandler handler = newRetryingHMSHandler(baseHandler, conf);
       TServerSocket serverSocket  = null;
 
@@ -6576,14 +6601,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw new HiveMetaException("Framed transport is not supported with SASL enabled.");
         }
         saslServer = bridge.createServer(
-            conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_KEYTAB_FILE),
-            conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL));
+                conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_KEYTAB_FILE),
+                conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL));
         // start delegation token manager
         saslServer.startDelegationTokenSecretManager(conf, baseHandler, ServerMode.METASTORE);
         transFactory = saslServer.createTransportFactory(
                 MetaStoreUtils.getMetaStoreSaslProperties(conf));
         processor = saslServer.wrapProcessor(
-          new ThriftHiveMetastore.Processor<IHMSHandler>(handler));
+                new ThriftHiveMetastore.Processor<IHMSHandler>(handler));
         serverSocket = HiveAuthUtils.getServerSocket(null, port);
 
         LOG.info("Starting DB backed MetaStore Server in Secure Mode");
@@ -6591,15 +6616,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         // we are in unsecure mode.
         if (conf.getBoolVar(ConfVars.METASTORE_EXECUTE_SET_UGI)) {
           transFactory = useFramedTransport ?
-              new ChainedTTransportFactory(new TFramedTransport.Factory(),
-                  new TUGIContainingTransport.Factory())
-              : new TUGIContainingTransport.Factory();
+                  new ChainedTTransportFactory(new TFramedTransport.Factory(),
+                          new TUGIContainingTransport.Factory())
+                  : new TUGIContainingTransport.Factory();
 
           processor = new TUGIBasedProcessor<IHMSHandler>(handler);
           LOG.info("Starting DB backed MetaStore Server with SetUGI enabled");
         } else {
           transFactory = useFramedTransport ?
-              new TFramedTransport.Factory() : new TTransportFactory();
+                  new TFramedTransport.Factory() : new TTransportFactory();
           processor = new TSetIpAddressProcessor<IHMSHandler>(handler);
           LOG.info("Starting DB backed MetaStore Server");
         }
@@ -6615,12 +6640,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           String keyStorePath = conf.getVar(ConfVars.HIVE_METASTORE_SSL_KEYSTORE_PATH).trim();
           if (keyStorePath.isEmpty()) {
             throw new IllegalArgumentException(ConfVars.HIVE_METASTORE_SSL_KEYSTORE_PASSWORD.varname
-                + " Not configured for SSL connection");
+                    + " Not configured for SSL connection");
           }
           String keyStorePassword = ShimLoader.getHadoopShims().getPassword(conf,
-              HiveConf.ConfVars.HIVE_METASTORE_SSL_KEYSTORE_PASSWORD.varname);
+                  HiveConf.ConfVars.HIVE_METASTORE_SSL_KEYSTORE_PASSWORD.varname);
           serverSocket = HiveAuthUtils.getServerSSLSocket(null, port, keyStorePath,
-              keyStorePassword, sslVersionBlacklist);
+                  keyStorePassword, sslVersionBlacklist);
         }
       }
 
@@ -6629,12 +6654,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
 
       TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverSocket)
-          .processor(processor)
-          .transportFactory(transFactory)
-          .protocolFactory(protocolFactory)
-          .inputProtocolFactory(inputProtoFactory)
-          .minWorkerThreads(minWorkerThreads)
-          .maxWorkerThreads(maxWorkerThreads);
+              .processor(processor)
+              .transportFactory(transFactory)
+              .protocolFactory(protocolFactory)
+              .inputProtocolFactory(inputProtoFactory)
+              .minWorkerThreads(minWorkerThreads)
+              .maxWorkerThreads(maxWorkerThreads);
 
       TServer tServer = new TThreadPoolServer(args);
       TServerEventHandler tServerEventHandler = new TServerEventHandler() {
@@ -6677,11 +6702,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       tServer.setServerEventHandler(tServerEventHandler);
       HMSHandler.LOG.info("Started the new metaserver on port [" + port
-          + "]...");
+              + "]...");
       HMSHandler.LOG.info("Options.minWorkerThreads = "
-          + minWorkerThreads);
+              + minWorkerThreads);
       HMSHandler.LOG.info("Options.maxWorkerThreads = "
-          + maxWorkerThreads);
+              + maxWorkerThreads);
       HMSHandler.LOG.info("TCP keepalive = " + tcpKeepAlive);
 
       if (startLock != null) {
@@ -6762,7 +6787,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           pauseMonitor.start();
         } catch (Throwable t) {
           LOG.warn("Could not initiate the JvmPauseMonitor thread." + " GCs and Pauses may not be " +
-            "warned upon.", t);
+                  "warned upon.", t);
         }
 
         try {
@@ -6774,7 +6799,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           startCompactorCleaner(conf);
         } catch (Throwable e) {
           LOG.error("Failure when starting the compactor, compactions may not happen, " +
-              StringUtils.stringifyException(e));
+                  StringUtils.stringifyException(e));
         } finally {
           startLock.unlock();
         }
@@ -6788,7 +6813,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   private static void startCompactorInitiator(HiveConf conf) throws Exception {
     if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_COMPACTOR_INITIATOR_ON)) {
       MetaStoreThread initiator =
-          instantiateThread("org.apache.hadoop.hive.ql.txn.compactor.Initiator");
+              instantiateThread("org.apache.hadoop.hive.ql.txn.compactor.Initiator");
       initializeAndStartThread(initiator, conf);
     }
   }
@@ -6797,7 +6822,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     int numWorkers = HiveConf.getIntVar(conf, HiveConf.ConfVars.HIVE_COMPACTOR_WORKER_THREADS);
     for (int i = 0; i < numWorkers; i++) {
       MetaStoreThread worker =
-          instantiateThread("org.apache.hadoop.hive.ql.txn.compactor.Worker");
+              instantiateThread("org.apache.hadoop.hive.ql.txn.compactor.Worker");
       initializeAndStartThread(worker, conf);
     }
   }
@@ -6805,7 +6830,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   private static void startCompactorCleaner(HiveConf conf) throws Exception {
     if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_COMPACTOR_INITIATOR_ON)) {
       MetaStoreThread cleaner =
-          instantiateThread("org.apache.hadoop.hive.ql.txn.compactor.Cleaner");
+              instantiateThread("org.apache.hadoop.hive.ql.txn.compactor.Cleaner");
       initializeAndStartThread(cleaner, conf);
     }
   }
@@ -6825,7 +6850,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   private static int nextThreadId = 1000000;
 
   private static void initializeAndStartThread(MetaStoreThread thread, HiveConf conf) throws
-      MetaException {
+          MetaException {
     LOG.info("Starting metastore thread of type " + thread.getClass().getName());
     thread.setHiveConf(conf);
     thread.setThreadId(nextThreadId++);

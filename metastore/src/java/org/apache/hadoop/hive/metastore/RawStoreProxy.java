@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
@@ -37,40 +39,61 @@ import org.apache.hadoop.util.ReflectionUtils;
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class RawStoreProxy implements InvocationHandler {
+  public static final Log LOG = LogFactory.getLog(RawStoreProxy.class);
+
 
   private final RawStore base;
   private final MetaStoreInit.MetaStoreInitData metaStoreInitData =
-    new MetaStoreInit.MetaStoreInitData();
+          new MetaStoreInit.MetaStoreInitData();
   private final int id;
   private final HiveConf hiveConf;
   private final Configuration conf; // thread local conf from HMS
   private final long socketTimeout;
 
   protected RawStoreProxy(HiveConf hiveConf, Configuration conf,
-      Class<? extends RawStore> rawStoreClass, int id) throws MetaException {
+                          Class<? extends RawStore> rawStoreClass, int id) throws MetaException {
+    long starttime = System.currentTimeMillis();
     this.conf = conf;
     this.hiveConf = hiveConf;
     this.id = id;
     this.socketTimeout = HiveConf.getTimeVar(hiveConf,
-        HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
+            HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
+    LOG.info("ggggggggggggggg"+(System.currentTimeMillis()-starttime));
+
 
     // This has to be called before initializing the instance of RawStore
+    starttime = System.currentTimeMillis();
     init();
+    LOG.info("init"+(System.currentTimeMillis()-starttime));
 
+    starttime = System.currentTimeMillis();
     this.base = ReflectionUtils.newInstance(rawStoreClass, conf);
+    LOG.info("bbbbbbbbbbbbbbbbbb"+(System.currentTimeMillis()-starttime)+":"+rawStoreClass.getName());
+
   }
 
   public static RawStore getProxy(HiveConf hiveConf, Configuration conf, String rawStoreClassName,
-      int id) throws MetaException {
+                                  int id) throws MetaException {
+
+    long starttime = System.currentTimeMillis();
 
     Class<? extends RawStore> baseClass = (Class<? extends RawStore>) MetaStoreUtils.getClass(
-        rawStoreClassName);
+            rawStoreClassName);
+
+    LOG.info("baseClasssss"+(System.currentTimeMillis()-starttime));
+    starttime = System.currentTimeMillis();
+
 
     RawStoreProxy handler = new RawStoreProxy(hiveConf, conf, baseClass, id);
+    LOG.info("handlersss"+(System.currentTimeMillis()-starttime));
+
+    starttime = System.currentTimeMillis();
+    RawStore rs = (RawStore) Proxy.newProxyInstance(RawStoreProxy.class.getClassLoader(),
+            getAllInterfaces(baseClass), handler);
+    LOG.info("newProxyInstancessss"+(System.currentTimeMillis()-starttime));
 
     // Look for interfaces on both the class and all base classes.
-    return (RawStore) Proxy.newProxyInstance(RawStoreProxy.class.getClassLoader(),
-        getAllInterfaces(baseClass), handler);
+    return rs;
   }
 
   private static Class<?>[] getAllInterfaces(Class<?> baseClass) {

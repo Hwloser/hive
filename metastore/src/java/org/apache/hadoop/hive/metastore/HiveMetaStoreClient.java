@@ -183,12 +183,12 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   static final protected Log LOG = LogFactory.getLog("hive.metastore");
 
   public HiveMetaStoreClient(HiveConf conf)
-    throws MetaException {
+          throws MetaException {
     this(conf, null);
   }
 
   public HiveMetaStoreClient(HiveConf conf, HiveMetaHookLoader hookLoader)
-    throws MetaException {
+          throws MetaException {
 
     this.hookLoader = hookLoader;
     if (conf == null) {
@@ -213,12 +213,12 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     // get the number retries
     retries = HiveConf.getIntVar(conf, HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES);
     retryDelaySeconds = conf.getTimeVar(
-        ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY, TimeUnit.SECONDS);
+            ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY, TimeUnit.SECONDS);
 
     // user wants file store based configuration
     if (conf.getVar(HiveConf.ConfVars.METASTOREURIS) != null) {
       String metastoreUrisString[] = conf.getVar(
-          HiveConf.ConfVars.METASTOREURIS).split(",");
+              HiveConf.ConfVars.METASTOREURIS).split(",");
       metastoreUris = new URI[metastoreUrisString.length];
       try {
         int i = 0;
@@ -226,7 +226,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
           URI tmpUri = new URI(s);
           if (tmpUri.getScheme() == null) {
             throw new IllegalArgumentException("URI: " + s
-                + " does not have a scheme");
+                    + " does not have a scheme");
           }
           metastoreUris[i++] = tmpUri;
 
@@ -246,13 +246,13 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   private MetaStoreFilterHook loadFilterHooks() throws IllegalStateException {
     Class<? extends MetaStoreFilterHook> authProviderClass = conf.
-        getClass(HiveConf.ConfVars.METASTORE_FILTER_HOOK.varname,
-            DefaultMetaStoreFilterHookImpl.class,
-            MetaStoreFilterHook.class);
+            getClass(HiveConf.ConfVars.METASTORE_FILTER_HOOK.varname,
+                    DefaultMetaStoreFilterHookImpl.class,
+                    MetaStoreFilterHook.class);
     String msg = "Unable to create instance of " + authProviderClass.getName() + ": ";
     try {
       Constructor<? extends MetaStoreFilterHook> constructor =
-          authProviderClass.getConstructor(HiveConf.class);
+              authProviderClass.getConstructor(HiveConf.class);
       return constructor.newInstance(conf);
     } catch (NoSuchMethodException e) {
       throw new IllegalStateException(msg + e.getMessage(), e);
@@ -300,9 +300,9 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
       String oldVar = currentMetaVars.get(oneVar.varname);
       String newVar = conf.get(oneVar.varname, "");
       if (oldVar == null ||
-          (oneVar.isCaseSensitive() ? !oldVar.equals(newVar) : !oldVar.equalsIgnoreCase(newVar))) {
+              (oneVar.isCaseSensitive() ? !oldVar.equals(newVar) : !oldVar.equalsIgnoreCase(newVar))) {
         LOG.info("Mestastore configuration " + oneVar.varname +
-            " changed from " + oldVar + " to " + newVar);
+                " changed from " + oldVar + " to " + newVar);
         compatible = false;
       }
     }
@@ -319,7 +319,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     if (localMetaStore) {
       // For direct DB connections we don't yet support reestablishing connections.
       throw new MetaException("For direct MetaStore DB connections, we don't support retries" +
-          " at the client level.");
+              " at the client level.");
     } else {
       close();
       // Swap the first element of the metastoreUris[] with a random element from the rest
@@ -344,18 +344,18 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void alter_table(String dbname, String tbl_name, Table new_tbl)
-      throws InvalidOperationException, MetaException, TException {
+          throws InvalidOperationException, MetaException, TException {
     alter_table(dbname, tbl_name, new_tbl, null);
   }
 
   @Override
   public void alter_table(String dbname, String tbl_name, Table new_tbl, boolean cascade)
-      throws InvalidOperationException, MetaException, TException {
+          throws InvalidOperationException, MetaException, TException {
     client.alter_table_with_cascade(dbname, tbl_name, new_tbl, cascade);
   }
 
   public void alter_table(String dbname, String tbl_name, Table new_tbl,
-      EnvironmentContext envContext) throws InvalidOperationException, MetaException, TException {
+                          EnvironmentContext envContext) throws InvalidOperationException, MetaException, TException {
     client.alter_table_with_environment_context(dbname, tbl_name, new_tbl, envContext);
   }
 
@@ -372,7 +372,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void renamePartition(final String dbname, final String name, final List<String> part_vals, final Partition newPart)
-      throws InvalidOperationException, MetaException, TException {
+          throws InvalidOperationException, MetaException, TException {
     client.rename_partition(dbname, name, part_vals, newPart);
   }
 
@@ -384,7 +384,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     boolean useFramedTransport = conf.getBoolVar(ConfVars.METASTORE_USE_THRIFT_FRAMED_TRANSPORT);
     boolean useCompactProtocol = conf.getBoolVar(ConfVars.METASTORE_USE_THRIFT_COMPACT_PROTOCOL);
     int clientSocketTimeout = (int) conf.getTimeVar(
-        ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
+            ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
 
     for (int attempt = 0; !isConnected && attempt < retries; ++attempt) {
       for (URI store : metastoreUris) {
@@ -395,7 +395,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
             // Wrap thrift connection with SASL for secure connection.
             try {
               HadoopThriftAuthBridge.Client authBridge =
-                ShimLoader.getHadoopThriftAuthBridge().createClient();
+                      ShimLoader.getHadoopThriftAuthBridge().createClient();
 
               // check if we should use delegation tokens to authenticate
               // the call below gets hold of the tokens if they are set up by hadoop
@@ -410,14 +410,14 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
               if(tokenStrForm != null) {
                 // authenticate using delegation tokens via the "DIGEST" mechanism
                 transport = authBridge.createClientTransport(null, store.getHost(),
-                    "DIGEST", tokenStrForm, transport,
+                        "DIGEST", tokenStrForm, transport,
                         MetaStoreUtils.getMetaStoreSaslProperties(conf));
               } else {
                 String principalConfig =
-                    conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL);
+                        conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL);
                 transport = authBridge.createClientTransport(
-                    principalConfig, store.getHost(), "KERBEROS", null,
-                    transport, MetaStoreUtils.getMetaStoreSaslProperties(conf));
+                        principalConfig, store.getHost(), "KERBEROS", null,
+                        transport, MetaStoreUtils.getMetaStoreSaslProperties(conf));
               }
             } catch (IOException ioe) {
               LOG.error("Couldn't create client transport", ioe);
@@ -429,10 +429,10 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
                 String trustStorePath = conf.getVar(ConfVars.HIVE_METASTORE_SSL_TRUSTSTORE_PATH).trim();
                 if (trustStorePath.isEmpty()) {
                   throw new IllegalArgumentException(ConfVars.HIVE_METASTORE_SSL_TRUSTSTORE_PATH.varname
-                      + " Not configured for SSL connection");
+                          + " Not configured for SSL connection");
                 }
                 String trustStorePassword = ShimLoader.getHadoopShims().getPassword(conf,
-                    HiveConf.ConfVars.HIVE_METASTORE_SSL_TRUSTSTORE_PASSWORD.varname);
+                        HiveConf.ConfVars.HIVE_METASTORE_SSL_TRUSTSTORE_PASSWORD.varname);
 
                 // Create an SSL socket and connect
                 transport = HiveAuthUtils.getSSLSocket(store.getHost(), store.getPort(), clientSocketTimeout, trustStorePath, trustStorePassword );
@@ -482,18 +482,18 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
               client.set_ugi(ugi.getUserName(), Arrays.asList(ugi.getGroupNames()));
             } catch (LoginException e) {
               LOG.warn("Failed to do login. set_ugi() is not successful, " +
-                       "Continuing without it.", e);
+                      "Continuing without it.", e);
             } catch (IOException e) {
               LOG.warn("Failed to find ugi of client set_ugi() is not successful, " +
-                  "Continuing without it.", e);
+                      "Continuing without it.", e);
             } catch (TException e) {
               LOG.warn("set_ugi() not successful, Likely cause: new client talking to old server. "
-                  + "Continuing without it.", e);
+                      + "Continuing without it.", e);
             }
           }
         } catch (MetaException e) {
           LOG.error("Unable to connect to metastore with URI " + store
-                    + " in attempt " + attempt, e);
+                  + " in attempt " + attempt, e);
         }
         if (isConnected) {
           break;
@@ -510,7 +510,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
     if (!isConnected) {
       throw new MetaException("Could not connect to meta store using any of the URIs provided." +
-        " Most recent failure: " + StringUtils.stringifyException(tte));
+              " Most recent failure: " + StringUtils.stringifyException(tte));
     }
 
     snapshotActiveConf();
@@ -527,7 +527,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   public String getTokenStrForm() throws IOException {
     return tokenStrForm;
-   }
+  }
 
   @Override
   public void close() {
@@ -569,14 +569,14 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public Partition add_partition(Partition new_part)
-      throws InvalidObjectException, AlreadyExistsException, MetaException,
-      TException {
+          throws InvalidObjectException, AlreadyExistsException, MetaException,
+          TException {
     return add_partition(new_part, null);
   }
 
   public Partition add_partition(Partition new_part, EnvironmentContext envContext)
-      throws InvalidObjectException, AlreadyExistsException, MetaException,
-      TException {
+          throws InvalidObjectException, AlreadyExistsException, MetaException,
+          TException {
     return deepCopy(client.add_partition_with_environment_context(new_part, envContext));
   }
 
@@ -590,21 +590,21 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public int add_partitions(List<Partition> new_parts)
-      throws InvalidObjectException, AlreadyExistsException, MetaException,
-      TException {
+          throws InvalidObjectException, AlreadyExistsException, MetaException,
+          TException {
     return client.add_partitions(new_parts);
   }
 
   @Override
   public List<Partition> add_partitions(
-      List<Partition> parts, boolean ifNotExists, boolean needResults)
-      throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+          List<Partition> parts, boolean ifNotExists, boolean needResults)
+          throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
     if (parts.isEmpty()) {
       return needResults ? new ArrayList<Partition>() : null;
     }
     Partition part = parts.get(0);
     AddPartitionsRequest req = new AddPartitionsRequest(
-        part.getDbName(), part.getTableName(), parts, ifNotExists);
+            part.getDbName(), part.getTableName(), parts, ifNotExists);
     req.setNeedResult(needResults);
     AddPartitionsResult result = client.add_partitions_req(req);
     return needResults ? filterHook.filterPartitions(result.getPartitions()) : null;
@@ -629,29 +629,29 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public Partition appendPartition(String db_name, String table_name,
-      List<String> part_vals) throws InvalidObjectException,
-      AlreadyExistsException, MetaException, TException {
+                                   List<String> part_vals) throws InvalidObjectException,
+          AlreadyExistsException, MetaException, TException {
     return appendPartition(db_name, table_name, part_vals, null);
   }
 
   public Partition appendPartition(String db_name, String table_name, List<String> part_vals,
-      EnvironmentContext envContext) throws InvalidObjectException, AlreadyExistsException,
-      MetaException, TException {
+                                   EnvironmentContext envContext) throws InvalidObjectException, AlreadyExistsException,
+          MetaException, TException {
     return deepCopy(client.append_partition_with_environment_context(db_name, table_name,
-        part_vals, envContext));
+            part_vals, envContext));
   }
 
   @Override
   public Partition appendPartition(String dbName, String tableName, String partName)
-      throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+          throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
     return appendPartition(dbName, tableName, partName, null);
   }
 
   public Partition appendPartition(String dbName, String tableName, String partName,
-      EnvironmentContext envContext) throws InvalidObjectException, AlreadyExistsException,
-      MetaException, TException {
+                                   EnvironmentContext envContext) throws InvalidObjectException, AlreadyExistsException,
+          MetaException, TException {
     return deepCopy(client.append_partition_by_name_with_environment_context(dbName, tableName,
-        partName, envContext));
+            partName, envContext));
   }
 
   /**
@@ -659,15 +659,15 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    * @param partitionSpecs partitions specs of the parent partition to be exchanged
    * @param destDb the db of the destination table
    * @param destinationTableName the destination table name
-   @ @return new partition after exchanging
+  @ @return new partition after exchanging
    */
   @Override
   public Partition exchange_partition(Map<String, String> partitionSpecs,
-      String sourceDb, String sourceTable, String destDb,
-      String destinationTableName) throws MetaException,
-      NoSuchObjectException, InvalidObjectException, TException {
+                                      String sourceDb, String sourceTable, String destDb,
+                                      String destinationTableName) throws MetaException,
+          NoSuchObjectException, InvalidObjectException, TException {
     return client.exchange_partition(partitionSpecs, sourceDb, sourceTable,
-        destDb, destinationTableName);
+            destDb, destinationTableName);
   }
 
   /**
@@ -675,20 +675,20 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    * @param partitionSpecs partitions specs of the parent partition to be exchanged
    * @param destDb the db of the destination table
    * @param destinationTableName the destination table name
-   @ @return new partitions after exchanging
+  @ @return new partitions after exchanging
    */
   @Override
   public List<Partition> exchange_partitions(Map<String, String> partitionSpecs,
-      String sourceDb, String sourceTable, String destDb,
-      String destinationTableName) throws MetaException,
-      NoSuchObjectException, InvalidObjectException, TException {
+                                             String sourceDb, String sourceTable, String destDb,
+                                             String destinationTableName) throws MetaException,
+          NoSuchObjectException, InvalidObjectException, TException {
     return client.exchange_partitions(partitionSpecs, sourceDb, sourceTable,
-        destDb, destinationTableName);
+            destDb, destinationTableName);
   }
 
   @Override
   public void validatePartitionNameCharacters(List<String> partVals)
-      throws TException, MetaException {
+          throws TException, MetaException {
     client.partition_name_has_valid_characters(partVals, true);
   }
 
@@ -703,7 +703,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void createDatabase(Database db)
-      throws AlreadyExistsException, InvalidObjectException, MetaException, TException {
+          throws AlreadyExistsException, InvalidObjectException, MetaException, TException {
     client.create_database(db);
   }
 
@@ -716,12 +716,12 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void createTable(Table tbl) throws AlreadyExistsException,
-      InvalidObjectException, MetaException, NoSuchObjectException, TException {
+          InvalidObjectException, MetaException, NoSuchObjectException, TException {
     createTable(tbl, null);
   }
 
   public void createTable(Table tbl, EnvironmentContext envContext) throws AlreadyExistsException,
-      InvalidObjectException, MetaException, NoSuchObjectException, TException {
+          InvalidObjectException, MetaException, NoSuchObjectException, TException {
     HiveMetaHook hook = getHook(tbl);
     if (hook != null) {
       hook.preCreateTable(tbl);
@@ -751,7 +751,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#create_type(org.apache.hadoop.hive.metastore.api.Type)
    */
   public boolean createType(Type type) throws AlreadyExistsException,
-      InvalidObjectException, MetaException, TException {
+          InvalidObjectException, MetaException, TException {
     return client.create_type(type);
   }
 
@@ -765,19 +765,19 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void dropDatabase(String name)
-      throws NoSuchObjectException, InvalidOperationException, MetaException, TException {
+          throws NoSuchObjectException, InvalidOperationException, MetaException, TException {
     dropDatabase(name, true, false, false);
   }
 
   @Override
   public void dropDatabase(String name, boolean deleteData, boolean ignoreUnknownDb)
-      throws NoSuchObjectException, InvalidOperationException, MetaException, TException {
+          throws NoSuchObjectException, InvalidOperationException, MetaException, TException {
     dropDatabase(name, deleteData, ignoreUnknownDb, false);
   }
 
   @Override
   public void dropDatabase(String name, boolean deleteData, boolean ignoreUnknownDb, boolean cascade)
-      throws NoSuchObjectException, InvalidOperationException, MetaException, TException {
+          throws NoSuchObjectException, InvalidOperationException, MetaException, TException {
     try {
       getDatabase(name);
     } catch (NoSuchObjectException e) {
@@ -788,15 +788,15 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     }
 
     if (cascade) {
-       List<String> tableList = getAllTables(name);
-       for (String table : tableList) {
-         try {
-           // Subclasses can override this step (for example, for temporary tables)
-           dropTable(name, table, deleteData, true);
-         } catch (UnsupportedOperationException e) {
-           // Ignore Index tables, those will be dropped with parent tables
-         }
+      List<String> tableList = getAllTables(name);
+      for (String table : tableList) {
+        try {
+          // Subclasses can override this step (for example, for temporary tables)
+          dropTable(name, table, deleteData, true);
+        } catch (UnsupportedOperationException e) {
+          // Ignore Index tables, those will be dropped with parent tables
         }
+      }
     }
     client.drop_database(name, deleteData, cascade);
   }
@@ -814,19 +814,19 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    *      java.lang.String, java.util.List, boolean)
    */
   public boolean dropPartition(String db_name, String tbl_name,
-      List<String> part_vals) throws NoSuchObjectException, MetaException,
-      TException {
+                               List<String> part_vals) throws NoSuchObjectException, MetaException,
+          TException {
     return dropPartition(db_name, tbl_name, part_vals, true, null);
   }
 
   public boolean dropPartition(String db_name, String tbl_name, List<String> part_vals,
-      EnvironmentContext env_context) throws NoSuchObjectException, MetaException, TException {
+                               EnvironmentContext env_context) throws NoSuchObjectException, MetaException, TException {
     return dropPartition(db_name, tbl_name, part_vals, true, env_context);
   }
 
   @Override
   public boolean dropPartition(String dbName, String tableName, String partName, boolean deleteData)
-      throws NoSuchObjectException, MetaException, TException {
+          throws NoSuchObjectException, MetaException, TException {
     return dropPartition(dbName, tableName, partName, deleteData, null);
   }
 
@@ -837,9 +837,9 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   }
 
   public boolean dropPartition(String dbName, String tableName, String partName, boolean deleteData,
-      EnvironmentContext envContext) throws NoSuchObjectException, MetaException, TException {
+                               EnvironmentContext envContext) throws NoSuchObjectException, MetaException, TException {
     return client.drop_partition_by_name_with_environment_context(dbName, tableName, partName,
-        deleteData, envContext);
+            deleteData, envContext);
   }
 
   /**
@@ -857,29 +857,29 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public boolean dropPartition(String db_name, String tbl_name,
-      List<String> part_vals, boolean deleteData) throws NoSuchObjectException,
-      MetaException, TException {
+                               List<String> part_vals, boolean deleteData) throws NoSuchObjectException,
+          MetaException, TException {
     return dropPartition(db_name, tbl_name, part_vals, deleteData, null);
   }
 
   @Override
   public boolean dropPartition(String db_name, String tbl_name,
-      List<String> part_vals, PartitionDropOptions options) throws TException {
+                               List<String> part_vals, PartitionDropOptions options) throws TException {
     return dropPartition(db_name, tbl_name, part_vals, options.deleteData,
-                         options.purgeData? getEnvironmentContextWithIfPurgeSet() : null);
+            options.purgeData? getEnvironmentContextWithIfPurgeSet() : null);
   }
 
   public boolean dropPartition(String db_name, String tbl_name, List<String> part_vals,
-      boolean deleteData, EnvironmentContext envContext) throws NoSuchObjectException,
-      MetaException, TException {
+                               boolean deleteData, EnvironmentContext envContext) throws NoSuchObjectException,
+          MetaException, TException {
     return client.drop_partition_with_environment_context(db_name, tbl_name, part_vals, deleteData,
-        envContext);
+            envContext);
   }
 
   @Override
   public List<Partition> dropPartitions(String dbName, String tblName,
                                         List<ObjectPair<Integer, byte[]>> partExprs, PartitionDropOptions options)
-      throws TException {
+          throws TException {
     RequestPartsSpec rps = new RequestPartsSpec();
     List<DropPartitionsExpr> exprs = new ArrayList<DropPartitionsExpr>(partExprs.size());
     for (ObjectPair<Integer, byte[]> partExpr : partExprs) {
@@ -903,28 +903,28 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public List<Partition> dropPartitions(String dbName, String tblName,
-      List<ObjectPair<Integer, byte[]>> partExprs, boolean deleteData, boolean ignoreProtection,
-      boolean ifExists, boolean needResult) throws NoSuchObjectException, MetaException, TException {
+                                        List<ObjectPair<Integer, byte[]>> partExprs, boolean deleteData, boolean ignoreProtection,
+                                        boolean ifExists, boolean needResult) throws NoSuchObjectException, MetaException, TException {
 
     return dropPartitions(dbName, tblName, partExprs,
-                          PartitionDropOptions.instance()
-                                              .deleteData(deleteData)
-                                              .ignoreProtection(ignoreProtection)
-                                              .ifExists(ifExists)
-                                              .returnResults(needResult));
+            PartitionDropOptions.instance()
+                    .deleteData(deleteData)
+                    .ignoreProtection(ignoreProtection)
+                    .ifExists(ifExists)
+                    .returnResults(needResult));
 
   }
 
   @Override
   public List<Partition> dropPartitions(String dbName, String tblName,
-      List<ObjectPair<Integer, byte[]>> partExprs, boolean deleteData, boolean ignoreProtection,
-      boolean ifExists) throws NoSuchObjectException, MetaException, TException {
+                                        List<ObjectPair<Integer, byte[]>> partExprs, boolean deleteData, boolean ignoreProtection,
+                                        boolean ifExists) throws NoSuchObjectException, MetaException, TException {
     // By default, we need the results from dropPartitions();
     return dropPartitions(dbName, tblName, partExprs,
-                          PartitionDropOptions.instance()
-                                              .deleteData(deleteData)
-                                              .ignoreProtection(ignoreProtection)
-                                              .ifExists(ifExists));
+            PartitionDropOptions.instance()
+                    .deleteData(deleteData)
+                    .ignoreProtection(ignoreProtection)
+                    .ifExists(ifExists));
   }
 
   /**
@@ -933,8 +933,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void dropTable(String dbname, String name, boolean deleteData,
-      boolean ignoreUnknownTab) throws MetaException, TException,
-      NoSuchObjectException, UnsupportedOperationException {
+                        boolean ignoreUnknownTab) throws MetaException, TException,
+          NoSuchObjectException, UnsupportedOperationException {
     dropTable(dbname, name, deleteData, ignoreUnknownTab, null);
   }
 
@@ -946,8 +946,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void dropTable(String dbname, String name, boolean deleteData,
-      boolean ignoreUnknownTab, boolean ifPurge)
-      throws MetaException, TException, NoSuchObjectException, UnsupportedOperationException {
+                        boolean ignoreUnknownTab, boolean ifPurge)
+          throws MetaException, TException, NoSuchObjectException, UnsupportedOperationException {
     //build new environmentContext with ifPurge;
     EnvironmentContext envContext = null;
     if(ifPurge){
@@ -963,7 +963,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   @Deprecated
   public void dropTable(String tableName, boolean deleteData)
-      throws MetaException, UnknownTableException, TException, NoSuchObjectException {
+          throws MetaException, UnknownTableException, TException, NoSuchObjectException {
     dropTable(DEFAULT_DATABASE_NAME, tableName, deleteData, false, null);
   }
 
@@ -972,7 +972,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void dropTable(String dbname, String name)
-      throws NoSuchObjectException, MetaException, TException {
+          throws NoSuchObjectException, MetaException, TException {
     dropTable(dbname, name, true, true, null);
   }
 
@@ -1000,8 +1000,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    *      java.lang.String, boolean)
    */
   public void dropTable(String dbname, String name, boolean deleteData,
-      boolean ignoreUnknownTab, EnvironmentContext envContext) throws MetaException, TException,
-      NoSuchObjectException, UnsupportedOperationException {
+                        boolean ignoreUnknownTab, EnvironmentContext envContext) throws MetaException, TException,
+          NoSuchObjectException, UnsupportedOperationException {
     Table tbl;
     try {
       tbl = getTable(dbname, name);
@@ -1055,7 +1055,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    * @see org.apache.hadoop.hive.metastore.api.ThriftHiveMetastore.Iface#get_type_all(java.lang.String)
    */
   public Map<String, Type> getTypeAll(String name) throws MetaException,
-      TException {
+          TException {
     Map<String, Type> result = null;
     Map<String, Type> fromClient = client.get_type_all(name);
     if (fromClient != null) {
@@ -1070,7 +1070,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   /** {@inheritDoc} */
   @Override
   public List<String> getDatabases(String databasePattern)
-    throws MetaException {
+          throws MetaException {
     try {
       return filterHook.filterDatabases(client.get_databases(databasePattern));
     } catch (Exception e) {
@@ -1101,40 +1101,40 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public List<Partition> listPartitions(String db_name, String tbl_name,
-      short max_parts) throws NoSuchObjectException, MetaException, TException {
+                                        short max_parts) throws NoSuchObjectException, MetaException, TException {
     return deepCopyPartitions(filterHook.filterPartitions(
-        client.get_partitions(db_name, tbl_name, max_parts)));
+            client.get_partitions(db_name, tbl_name, max_parts)));
   }
 
   @Override
   public PartitionSpecProxy listPartitionSpecs(String dbName, String tableName, int maxParts) throws TException {
     return PartitionSpecProxy.Factory.get(filterHook.filterPartitionSpecs(
-        client.get_partitions_pspec(dbName, tableName, maxParts)));
+            client.get_partitions_pspec(dbName, tableName, maxParts)));
   }
 
   @Override
   public List<Partition> listPartitions(String db_name, String tbl_name,
-      List<String> part_vals, short max_parts)
-      throws NoSuchObjectException, MetaException, TException {
+                                        List<String> part_vals, short max_parts)
+          throws NoSuchObjectException, MetaException, TException {
     return deepCopyPartitions(filterHook.filterPartitions(
-        client.get_partitions_ps(db_name, tbl_name, part_vals, max_parts)));
+            client.get_partitions_ps(db_name, tbl_name, part_vals, max_parts)));
   }
 
   @Override
   public List<Partition> listPartitionsWithAuthInfo(String db_name,
-      String tbl_name, short max_parts, String user_name, List<String> group_names)
-       throws NoSuchObjectException, MetaException, TException {
+                                                    String tbl_name, short max_parts, String user_name, List<String> group_names)
+          throws NoSuchObjectException, MetaException, TException {
     return deepCopyPartitions(filterHook.filterPartitions(
-        client.get_partitions_with_auth(db_name, tbl_name, max_parts, user_name, group_names)));
+            client.get_partitions_with_auth(db_name, tbl_name, max_parts, user_name, group_names)));
   }
 
   @Override
   public List<Partition> listPartitionsWithAuthInfo(String db_name,
-      String tbl_name, List<String> part_vals, short max_parts,
-      String user_name, List<String> group_names) throws NoSuchObjectException,
-      MetaException, TException {
+                                                    String tbl_name, List<String> part_vals, short max_parts,
+                                                    String user_name, List<String> group_names) throws NoSuchObjectException,
+          MetaException, TException {
     return deepCopyPartitions(filterHook.filterPartitions(client.get_partitions_ps_with_auth(db_name,
-        tbl_name, part_vals, max_parts, user_name, group_names)));
+            tbl_name, part_vals, max_parts, user_name, group_names)));
   }
 
   /**
@@ -1153,27 +1153,27 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public List<Partition> listPartitionsByFilter(String db_name, String tbl_name,
-      String filter, short max_parts) throws MetaException,
-         NoSuchObjectException, TException {
+                                                String filter, short max_parts) throws MetaException,
+          NoSuchObjectException, TException {
     return deepCopyPartitions(filterHook.filterPartitions(
-        client.get_partitions_by_filter(db_name, tbl_name, filter, max_parts)));
+            client.get_partitions_by_filter(db_name, tbl_name, filter, max_parts)));
   }
 
   @Override
   public PartitionSpecProxy listPartitionSpecsByFilter(String db_name, String tbl_name,
                                                        String filter, int max_parts) throws MetaException,
-         NoSuchObjectException, TException {
+          NoSuchObjectException, TException {
     return PartitionSpecProxy.Factory.get(filterHook.filterPartitionSpecs(
-        client.get_part_specs_by_filter(db_name, tbl_name, filter, max_parts)));
+            client.get_part_specs_by_filter(db_name, tbl_name, filter, max_parts)));
   }
 
   @Override
   public boolean listPartitionsByExpr(String db_name, String tbl_name, byte[] expr,
-      String default_partition_name, short max_parts, List<Partition> result)
+                                      String default_partition_name, short max_parts, List<Partition> result)
           throws TException {
     assert result != null;
     PartitionsByExprRequest req = new PartitionsByExprRequest(
-        db_name, tbl_name, ByteBuffer.wrap(expr));
+            db_name, tbl_name, ByteBuffer.wrap(expr));
     if (default_partition_name != null) {
       req.setDefaultPartitionName(default_partition_name);
     }
@@ -1186,11 +1186,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     } catch (TApplicationException te) {
       // TODO: backward compat for Hive <= 0.12. Can be removed later.
       if (te.getType() != TApplicationException.UNKNOWN_METHOD
-          && te.getType() != TApplicationException.WRONG_METHOD_NAME) {
+              && te.getType() != TApplicationException.WRONG_METHOD_NAME) {
         throw te;
       }
       throw new IncompatibleMetastoreException(
-          "Metastore doesn't support listPartitionsByExpr: " + te.getMessage());
+              "Metastore doesn't support listPartitionsByExpr: " + te.getMessage());
     }
     r.setPartitions(filterHook.filterPartitions(r.getPartitions()));
     // TODO: in these methods, do we really need to deepcopy?
@@ -1209,7 +1209,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public Database getDatabase(String name) throws NoSuchObjectException,
-      MetaException, TException {
+          MetaException, TException {
     return deepCopy(filterHook.filterDatabase(client.get_database(name)));
   }
 
@@ -1225,25 +1225,25 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public Partition getPartition(String db_name, String tbl_name,
-      List<String> part_vals) throws NoSuchObjectException, MetaException, TException {
+                                List<String> part_vals) throws NoSuchObjectException, MetaException, TException {
     return deepCopy(filterHook.filterPartition(
-        client.get_partition(db_name, tbl_name, part_vals)));
+            client.get_partition(db_name, tbl_name, part_vals)));
   }
 
   @Override
   public List<Partition> getPartitionsByNames(String db_name, String tbl_name,
-      List<String> part_names) throws NoSuchObjectException, MetaException, TException {
+                                              List<String> part_names) throws NoSuchObjectException, MetaException, TException {
     return deepCopyPartitions(filterHook.filterPartitions(
-        client.get_partitions_by_names(db_name, tbl_name, part_names)));
+            client.get_partitions_by_names(db_name, tbl_name, part_names)));
   }
 
   @Override
   public Partition getPartitionWithAuthInfo(String db_name, String tbl_name,
-      List<String> part_vals, String user_name, List<String> group_names)
-      throws MetaException, UnknownTableException, NoSuchObjectException,
-      TException {
+                                            List<String> part_vals, String user_name, List<String> group_names)
+          throws MetaException, UnknownTableException, NoSuchObjectException,
+          TException {
     return deepCopy(filterHook.filterPartition(client.get_partition_with_auth(db_name,
-        tbl_name, part_vals, user_name, group_names)));
+            tbl_name, part_vals, user_name, group_names)));
   }
 
   /**
@@ -1259,7 +1259,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public Table getTable(String dbname, String name) throws MetaException,
-      TException, NoSuchObjectException {
+          TException, NoSuchObjectException {
     return deepCopy(filterHook.filterTable(client.get_table(dbname, name)));
   }
 
@@ -1267,24 +1267,24 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   @Deprecated
   public Table getTable(String tableName) throws MetaException, TException,
-      NoSuchObjectException {
+          NoSuchObjectException {
     return filterHook.filterTable(getTable(DEFAULT_DATABASE_NAME, tableName));
   }
 
   /** {@inheritDoc} */
   @Override
   public List<Table> getTableObjectsByName(String dbName, List<String> tableNames)
-      throws MetaException, InvalidOperationException, UnknownDBException, TException {
+          throws MetaException, InvalidOperationException, UnknownDBException, TException {
     return deepCopyTables(filterHook.filterTables(
-        client.get_table_objects_by_name(dbName, tableNames)));
+            client.get_table_objects_by_name(dbName, tableNames)));
   }
 
   /** {@inheritDoc} */
   @Override
   public List<String> listTableNamesByFilter(String dbName, String filter, short maxTables)
-      throws MetaException, TException, InvalidOperationException, UnknownDBException {
+          throws MetaException, TException, InvalidOperationException, UnknownDBException {
     return filterHook.filterTableNames(dbName,
-        client.get_table_names_by_filter(dbName, filter, maxTables));
+            client.get_table_names_by_filter(dbName, filter, maxTables));
   }
 
   /**
@@ -1312,7 +1312,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public List<TableMeta> getTableMeta(String dbPatterns, String tablePatterns, List<String> tableTypes)
-      throws MetaException {
+          throws MetaException {
     try {
       return filterNames(client.get_table_meta(dbPatterns, tablePatterns, tableTypes));
     } catch (Exception e) {
@@ -1354,7 +1354,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public boolean tableExists(String databaseName, String tableName) throws MetaException,
-      TException, UnknownDBException {
+          TException, UnknownDBException {
     try {
       return filterHook.filterTable(client.get_table(databaseName, tableName)) != null;
     } catch (NoSuchObjectException e) {
@@ -1366,28 +1366,28 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   @Deprecated
   public boolean tableExists(String tableName) throws MetaException,
-      TException, UnknownDBException {
+          TException, UnknownDBException {
     return tableExists(DEFAULT_DATABASE_NAME, tableName);
   }
 
   @Override
   public List<String> listPartitionNames(String dbName, String tblName,
-      short max) throws MetaException, TException {
+                                         short max) throws MetaException, TException {
     return filterHook.filterPartitionNames(dbName, tblName,
-        client.get_partition_names(dbName, tblName, max));
+            client.get_partition_names(dbName, tblName, max));
   }
 
   @Override
   public List<String> listPartitionNames(String db_name, String tbl_name,
-      List<String> part_vals, short max_parts)
-      throws MetaException, TException, NoSuchObjectException {
+                                         List<String> part_vals, short max_parts)
+          throws MetaException, TException, NoSuchObjectException {
     return filterHook.filterPartitionNames(db_name, tbl_name,
-        client.get_partition_names_ps(db_name, tbl_name, part_vals, max_parts));
+            client.get_partition_names_ps(db_name, tbl_name, part_vals, max_parts));
   }
 
   /**
    * Get number of partitions matching specified filter
-   * 
+   *
    * @param db_name the database name
    * @param tbl_name the table name
    * @param filter the filter string, for example "part1 = \"p1_abc\" and part2 <= "\p2_test\"".
@@ -1398,25 +1398,25 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    * @throws TException
    */
   public int getNumPartitionsByFilter(String db_name, String tbl_name, String filter)
-    throws MetaException, NoSuchObjectException, TException {
+          throws MetaException, NoSuchObjectException, TException {
     return client.get_num_partitions_by_filter(db_name, tbl_name, filter);
   }
 
   @Override
   public void alter_partition(String dbName, String tblName, Partition newPart)
-      throws InvalidOperationException, MetaException, TException {
+          throws InvalidOperationException, MetaException, TException {
     client.alter_partition(dbName, tblName, newPart);
   }
 
   @Override
   public void alter_partitions(String dbName, String tblName, List<Partition> newParts)
-  throws InvalidOperationException, MetaException, TException {
+          throws InvalidOperationException, MetaException, TException {
     client.alter_partitions(dbName, tblName, newParts);
-}
+  }
 
   @Override
   public void alterDatabase(String dbName, Database db)
-      throws MetaException, NoSuchObjectException, TException {
+          throws MetaException, NoSuchObjectException, TException {
     client.alter_database(dbName, db);
   }
   /**
@@ -1431,8 +1431,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public List<FieldSchema> getFields(String db, String tableName)
-      throws MetaException, TException, UnknownTableException,
-      UnknownDBException {
+          throws MetaException, TException, UnknownTableException,
+          UnknownDBException {
     return deepCopyFieldSchemas(client.get_fields(db, tableName));
   }
 
@@ -1464,7 +1464,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public void alter_index(String dbname, String base_tbl_name, String idx_name, Index new_idx)
-      throws InvalidOperationException, MetaException, TException {
+          throws InvalidOperationException, MetaException, TException {
     client.alter_index(dbname, base_tbl_name, idx_name, new_idx);
   }
 
@@ -1480,8 +1480,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public Index getIndex(String dbName, String tblName, String indexName)
-      throws MetaException, UnknownTableException, NoSuchObjectException,
-      TException {
+          throws MetaException, UnknownTableException, NoSuchObjectException,
+          TException {
     return deepCopy(filterHook.filterIndex(client.get_index_by_name(dbName, tblName, indexName)));
   }
 
@@ -1497,7 +1497,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public List<String> listIndexNames(String dbName, String tblName, short max)
-      throws MetaException, TException {
+          throws MetaException, TException {
     return filterHook.filterIndexNames(dbName, tblName, client.get_index_names(dbName, tblName, max));
   }
 
@@ -1513,57 +1513,57 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public List<Index> listIndexes(String dbName, String tblName, short max)
-      throws NoSuchObjectException, MetaException, TException {
+          throws NoSuchObjectException, MetaException, TException {
     return filterHook.filterIndexes(client.get_indexes(dbName, tblName, max));
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean updateTableColumnStatistics(ColumnStatistics statsObj)
-    throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
-    InvalidInputException{
+          throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
+          InvalidInputException{
     return client.update_table_column_statistics(statsObj);
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean updatePartitionColumnStatistics(ColumnStatistics statsObj)
-    throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
-    InvalidInputException{
+          throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
+          InvalidInputException{
     return client.update_partition_column_statistics(statsObj);
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean setPartitionColumnStatistics(SetPartitionsStatsRequest request)
-    throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
-    InvalidInputException{
+          throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
+          InvalidInputException{
     return client.set_aggr_stats_for(request);
   }
 
   /** {@inheritDoc} */
   @Override
   public List<ColumnStatisticsObj> getTableColumnStatistics(String dbName, String tableName,
-      List<String> colNames) throws NoSuchObjectException, MetaException, TException,
-      InvalidInputException, InvalidObjectException {
+                                                            List<String> colNames) throws NoSuchObjectException, MetaException, TException,
+          InvalidInputException, InvalidObjectException {
     return client.get_table_statistics_req(
-        new TableStatsRequest(dbName, tableName, colNames)).getTableStats();
+            new TableStatsRequest(dbName, tableName, colNames)).getTableStats();
   }
 
   /** {@inheritDoc} */
   @Override
   public Map<String, List<ColumnStatisticsObj>> getPartitionColumnStatistics(
-      String dbName, String tableName, List<String> partNames, List<String> colNames)
+          String dbName, String tableName, List<String> partNames, List<String> colNames)
           throws NoSuchObjectException, MetaException, TException {
     return client.get_partitions_statistics_req(
-        new PartitionsStatsRequest(dbName, tableName, colNames, partNames)).getPartStats();
+            new PartitionsStatsRequest(dbName, tableName, colNames, partNames)).getPartStats();
   }
 
   /** {@inheritDoc} */
   @Override
   public boolean deletePartitionColumnStatistics(String dbName, String tableName, String partName,
-    String colName) throws NoSuchObjectException, InvalidObjectException, MetaException,
-    TException, InvalidInputException
+                                                 String colName) throws NoSuchObjectException, InvalidObjectException, MetaException,
+          TException, InvalidInputException
   {
     return client.delete_partition_column_statistics(dbName, tableName, partName, colName);
   }
@@ -1571,8 +1571,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   /** {@inheritDoc} */
   @Override
   public boolean deleteTableColumnStatistics(String dbName, String tableName, String colName)
-    throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
-    InvalidInputException
+          throws NoSuchObjectException, InvalidObjectException, MetaException, TException,
+          InvalidInputException
   {
     return client.delete_table_column_statistics(dbName, tableName, colName);
   }
@@ -1589,54 +1589,54 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    */
   @Override
   public List<FieldSchema> getSchema(String db, String tableName)
-      throws MetaException, TException, UnknownTableException,
-      UnknownDBException {
-      EnvironmentContext envCxt = null;
-      String addedJars = conf.getVar(ConfVars.HIVEADDEDJARS);
-      if(org.apache.commons.lang.StringUtils.isNotBlank(addedJars)) {
-         Map<String, String> props = new HashMap<String, String>();
-         props.put("hive.added.jars.path", addedJars);
-         envCxt = new EnvironmentContext(props);
-       }
+          throws MetaException, TException, UnknownTableException,
+          UnknownDBException {
+    EnvironmentContext envCxt = null;
+    String addedJars = conf.getVar(ConfVars.HIVEADDEDJARS);
+    if(org.apache.commons.lang.StringUtils.isNotBlank(addedJars)) {
+      Map<String, String> props = new HashMap<String, String>();
+      props.put("hive.added.jars.path", addedJars);
+      envCxt = new EnvironmentContext(props);
+    }
 
     return deepCopyFieldSchemas(client.get_schema_with_environment_context(db, tableName, envCxt));
   }
 
   @Override
   public String getConfigValue(String name, String defaultValue)
-      throws TException, ConfigValSecurityException {
+          throws TException, ConfigValSecurityException {
     return client.get_config_value(name, defaultValue);
   }
 
   @Override
   public Partition getPartition(String db, String tableName, String partName)
-      throws MetaException, TException, UnknownTableException, NoSuchObjectException {
+          throws MetaException, TException, UnknownTableException, NoSuchObjectException {
     return deepCopy(
-        filterHook.filterPartition(client.get_partition_by_name(db, tableName, partName)));
+            filterHook.filterPartition(client.get_partition_by_name(db, tableName, partName)));
   }
 
   public Partition appendPartitionByName(String dbName, String tableName, String partName)
-      throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
+          throws InvalidObjectException, AlreadyExistsException, MetaException, TException {
     return appendPartitionByName(dbName, tableName, partName, null);
   }
 
   public Partition appendPartitionByName(String dbName, String tableName, String partName,
-      EnvironmentContext envContext) throws InvalidObjectException, AlreadyExistsException,
-      MetaException, TException {
+                                         EnvironmentContext envContext) throws InvalidObjectException, AlreadyExistsException,
+          MetaException, TException {
     return deepCopy(client.append_partition_by_name_with_environment_context(dbName, tableName,
-        partName, envContext));
+            partName, envContext));
   }
 
   public boolean dropPartitionByName(String dbName, String tableName, String partName,
-      boolean deleteData) throws NoSuchObjectException, MetaException, TException {
+                                     boolean deleteData) throws NoSuchObjectException, MetaException, TException {
     return dropPartitionByName(dbName, tableName, partName, deleteData, null);
   }
 
   public boolean dropPartitionByName(String dbName, String tableName, String partName,
-      boolean deleteData, EnvironmentContext envContext) throws NoSuchObjectException,
-      MetaException, TException {
+                                     boolean deleteData, EnvironmentContext envContext) throws NoSuchObjectException,
+          MetaException, TException {
     return client.drop_partition_by_name_with_environment_context(dbName, tableName, partName,
-        deleteData, envContext);
+            deleteData, envContext);
   }
 
   private HiveMetaHook getHook(Table tbl) throws MetaException {
@@ -1729,7 +1729,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   }
 
   private List<Partition> deepCopyPartitions(
-      Collection<Partition> src, List<Partition> dest) {
+          Collection<Partition> src, List<Partition> dest) {
     if (src == null) {
       return dest;
     }
@@ -1766,15 +1766,15 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public boolean dropIndex(String dbName, String tblName, String name,
-      boolean deleteData) throws NoSuchObjectException, MetaException,
-      TException {
+                           boolean deleteData) throws NoSuchObjectException, MetaException,
+          TException {
     return client.drop_index_by_name(dbName, tblName, name, deleteData);
   }
 
   @Override
   public boolean grant_role(String roleName, String userName,
-      PrincipalType principalType, String grantor, PrincipalType grantorType,
-      boolean grantOption) throws MetaException, TException {
+                            PrincipalType principalType, String grantor, PrincipalType grantorType,
+                            boolean grantOption) throws MetaException, TException {
     GrantRevokeRoleRequest req = new GrantRevokeRoleRequest();
     req.setRequestType(GrantRevokeType.GRANT);
     req.setRoleName(roleName);
@@ -1792,7 +1792,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public boolean create_role(Role role)
-      throws MetaException, TException {
+          throws MetaException, TException {
     return client.create_role(role);
   }
 
@@ -1803,7 +1803,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public List<Role> list_roles(String principalName,
-      PrincipalType principalType) throws MetaException, TException {
+                               PrincipalType principalType) throws MetaException, TException {
     return client.list_roles(principalName, principalType);
   }
 
@@ -1814,19 +1814,19 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public GetPrincipalsInRoleResponse get_principals_in_role(GetPrincipalsInRoleRequest req)
-      throws MetaException, TException {
+          throws MetaException, TException {
     return client.get_principals_in_role(req);
   }
 
   @Override
   public GetRoleGrantsForPrincipalResponse get_role_grants_for_principal(
-      GetRoleGrantsForPrincipalRequest getRolePrincReq) throws MetaException, TException {
+          GetRoleGrantsForPrincipalRequest getRolePrincReq) throws MetaException, TException {
     return client.get_role_grants_for_principal(getRolePrincReq);
   }
 
   @Override
   public boolean grant_privileges(PrivilegeBag privileges)
-      throws MetaException, TException {
+          throws MetaException, TException {
     GrantRevokePrivilegeRequest req = new GrantRevokePrivilegeRequest();
     req.setRequestType(GrantRevokeType.GRANT);
     req.setPrivileges(privileges);
@@ -1839,7 +1839,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public boolean revoke_role(String roleName, String userName,
-      PrincipalType principalType, boolean grantOption) throws MetaException, TException {
+                             PrincipalType principalType, boolean grantOption) throws MetaException, TException {
     GrantRevokeRoleRequest req = new GrantRevokeRoleRequest();
     req.setRequestType(GrantRevokeType.REVOKE);
     req.setRoleName(roleName);
@@ -1855,7 +1855,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public boolean revoke_privileges(PrivilegeBag privileges, boolean grantOption) throws MetaException,
-      TException {
+          TException {
     GrantRevokePrivilegeRequest req = new GrantRevokePrivilegeRequest();
     req.setRequestType(GrantRevokeType.REVOKE);
     req.setPrivileges(privileges);
@@ -1869,20 +1869,20 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public PrincipalPrivilegeSet get_privilege_set(HiveObjectRef hiveObject,
-      String userName, List<String> groupNames) throws MetaException,
-      TException {
+                                                 String userName, List<String> groupNames) throws MetaException,
+          TException {
     return client.get_privilege_set(hiveObject, userName, groupNames);
   }
 
   @Override
   public List<HiveObjectPrivilege> list_privileges(String principalName,
-      PrincipalType principalType, HiveObjectRef hiveObject)
-      throws MetaException, TException {
+                                                   PrincipalType principalType, HiveObjectRef hiveObject)
+          throws MetaException, TException {
     return client.list_privileges(principalName, principalType, hiveObject);
   }
 
   public String getDelegationToken(String renewerKerberosPrincipalName) throws
-  MetaException, TException, IOException {
+          MetaException, TException, IOException {
     //a convenience method that makes the intended owner for the delegation
     //token request the current user
     String owner = conf.getUser();
@@ -1891,10 +1891,10 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public String getDelegationToken(String owner, String renewerKerberosPrincipalName) throws
-  MetaException, TException {
+          MetaException, TException {
     if(localMetaStore) {
       throw new UnsupportedOperationException("getDelegationToken() can be " +
-          "called only in thrift (non local) mode");
+              "called only in thrift (non local) mode");
     }
     return client.get_delegation_token(owner, renewerKerberosPrincipalName);
   }
@@ -1903,7 +1903,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   public long renewDelegationToken(String tokenStrForm) throws MetaException, TException {
     if(localMetaStore) {
       throw new UnsupportedOperationException("renewDelegationToken() can be " +
-          "called only in thrift (non local) mode");
+              "called only in thrift (non local) mode");
     }
     return client.renew_delegation_token(tokenStrForm);
 
@@ -1913,7 +1913,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   public void cancelDelegationToken(String tokenStrForm) throws MetaException, TException {
     if(localMetaStore) {
       throw new UnsupportedOperationException("renewDelegationToken() can be " +
-          "called only in thrift (non local) mode");
+              "called only in thrift (non local) mode");
     }
     client.cancel_delegation_token(tokenStrForm);
   }
@@ -1953,7 +1953,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public void commitTxn(long txnid)
-      throws NoSuchTxnException, TxnAbortedException, TException {
+          throws NoSuchTxnException, TxnAbortedException, TException {
     client.commit_txn(new CommitTxnRequest(txnid));
   }
 
@@ -1964,20 +1964,20 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public LockResponse lock(LockRequest request)
-      throws NoSuchTxnException, TxnAbortedException, TException {
+          throws NoSuchTxnException, TxnAbortedException, TException {
     return client.lock(request);
   }
 
   @Override
   public LockResponse checkLock(long lockid)
-      throws NoSuchTxnException, TxnAbortedException, NoSuchLockException,
-      TException {
+          throws NoSuchTxnException, TxnAbortedException, NoSuchLockException,
+          TException {
     return client.check_lock(new CheckLockRequest(lockid));
   }
 
   @Override
   public void unlock(long lockid)
-      throws NoSuchLockException, TxnOpenException, TException {
+          throws NoSuchLockException, TxnOpenException, TException {
     client.unlock(new UnlockRequest(lockid));
   }
 
@@ -1988,8 +1988,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public void heartbeat(long txnid, long lockid)
-      throws NoSuchLockException, NoSuchTxnException, TxnAbortedException,
-      TException {
+          throws NoSuchLockException, NoSuchTxnException, TxnAbortedException,
+          TException {
     HeartbeatRequest hb = new HeartbeatRequest();
     hb.setLockid(lockid);
     hb.setTxnid(txnid);
@@ -1998,14 +1998,14 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public HeartbeatTxnRangeResponse heartbeatTxnRange(long min, long max)
-    throws NoSuchTxnException, TxnAbortedException, TException {
+          throws NoSuchTxnException, TxnAbortedException, TException {
     HeartbeatTxnRangeRequest rqst = new HeartbeatTxnRangeRequest(min, max);
     return client.heartbeat_txn_range(rqst);
   }
 
   @Override
   public void compact(String dbname, String tableName, String partitionName,  CompactionType type)
-      throws TException {
+          throws TException {
     CompactionRequest cr = new CompactionRequest();
     if (dbname == null) cr.setDbname(DEFAULT_DATABASE_NAME);
     else cr.setDbname(dbname);
@@ -2063,11 +2063,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
    * @return synchronized client
    */
   public static IMetaStoreClient newSynchronizedClient(
-      IMetaStoreClient client) {
+          IMetaStoreClient client) {
     return (IMetaStoreClient) Proxy.newProxyInstance(
-      HiveMetaStoreClient.class.getClassLoader(),
-      new Class [] { IMetaStoreClient.class },
-      new SynchronizedHandler(client));
+            HiveMetaStoreClient.class.getClassLoader(),
+            new Class [] { IMetaStoreClient.class },
+            new SynchronizedHandler(client));
   }
 
   private static class SynchronizedHandler implements InvocationHandler {
@@ -2079,7 +2079,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
     @Override
     public synchronized Object invoke(Object proxy, Method method, Object [] args)
-        throws Throwable {
+            throws Throwable {
       try {
         return method.invoke(client, args);
       } catch (InvocationTargetException e) {
@@ -2090,9 +2090,9 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public void markPartitionForEvent(String db_name, String tbl_name, Map<String,String> partKVs, PartitionEventType eventType)
-      throws MetaException, TException, NoSuchObjectException, UnknownDBException,
-      UnknownTableException,
-      InvalidPartitionException, UnknownPartitionException {
+          throws MetaException, TException, NoSuchObjectException, UnknownDBException,
+          UnknownTableException,
+          InvalidPartitionException, UnknownPartitionException {
     assert db_name != null;
     assert tbl_name != null;
     assert partKVs != null;
@@ -2101,8 +2101,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public boolean isPartitionMarkedForEvent(String db_name, String tbl_name, Map<String,String> partKVs, PartitionEventType eventType)
-      throws MetaException, NoSuchObjectException, UnknownTableException, UnknownDBException, TException,
-      InvalidPartitionException, UnknownPartitionException {
+          throws MetaException, NoSuchObjectException, UnknownTableException, UnknownDBException, TException,
+          InvalidPartitionException, UnknownPartitionException {
     assert db_name != null;
     assert tbl_name != null;
     assert partKVs != null;
@@ -2111,32 +2111,32 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public void createFunction(Function func) throws InvalidObjectException,
-      MetaException, TException {
+          MetaException, TException {
     client.create_function(func);
   }
 
   @Override
   public void alterFunction(String dbName, String funcName, Function newFunction)
-      throws InvalidObjectException, MetaException, TException {
+          throws InvalidObjectException, MetaException, TException {
     client.alter_function(dbName, funcName, newFunction);
   }
 
   @Override
   public void dropFunction(String dbName, String funcName)
-      throws MetaException, NoSuchObjectException, InvalidObjectException,
-      InvalidInputException, TException {
+          throws MetaException, NoSuchObjectException, InvalidObjectException,
+          InvalidInputException, TException {
     client.drop_function(dbName, funcName);
   }
 
   @Override
   public Function getFunction(String dbName, String funcName)
-      throws MetaException, TException {
+          throws MetaException, TException {
     return deepCopy(client.get_function(dbName, funcName));
   }
 
   @Override
   public List<String> getFunctions(String dbName, String pattern)
-      throws MetaException, TException {
+          throws MetaException, TException {
     return client.get_functions(dbName, pattern);
   }
 
@@ -2147,20 +2147,20 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   }
 
   protected void create_table_with_environment_context(Table tbl, EnvironmentContext envContext)
-      throws AlreadyExistsException, InvalidObjectException,
-      MetaException, NoSuchObjectException, TException {
+          throws AlreadyExistsException, InvalidObjectException,
+          MetaException, NoSuchObjectException, TException {
     client.create_table_with_environment_context(tbl, envContext);
   }
 
   protected void drop_table_with_environment_context(String dbname, String name,
-      boolean deleteData, EnvironmentContext envContext) throws MetaException, TException,
-      NoSuchObjectException, UnsupportedOperationException {
+                                                     boolean deleteData, EnvironmentContext envContext) throws MetaException, TException,
+          NoSuchObjectException, UnsupportedOperationException {
     client.drop_table_with_environment_context(dbname, name, deleteData, envContext);
   }
 
   @Override
   public AggrStats getAggrColStatsFor(String dbName, String tblName,
-    List<String> colNames, List<String> partNames) throws NoSuchObjectException, MetaException, TException {
+                                      List<String> colNames, List<String> partNames) throws NoSuchObjectException, MetaException, TException {
     if (colNames.isEmpty() || partNames.isEmpty()) {
       LOG.debug("Columns is empty or partNames is empty : Short-circuiting stats eval on client side.");
       return new AggrStats(new ArrayList<ColumnStatisticsObj>(),0); // Nothing to aggregate

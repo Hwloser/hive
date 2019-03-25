@@ -52,32 +52,41 @@ public class MetaStoreInit {
    * @throws MetaException
    */
   static boolean updateConnectionURL(HiveConf originalConf, Configuration activeConf,
-    String badUrl, MetaStoreInitData updateData)
-      throws MetaException {
+                                     String badUrl, MetaStoreInitData updateData)
+          throws MetaException {
     String connectUrl = null;
+    long starttime = System.currentTimeMillis();
     String currentUrl = MetaStoreInit.getConnectionURL(activeConf);
+    LOG.info("getConnectionURLsss"+(System.currentTimeMillis()-starttime));
+
     try {
       // We always call init because the hook name in the configuration could
       // have changed.
+      starttime = System.currentTimeMillis();
       MetaStoreInit.initConnectionUrlHook(originalConf, updateData);
+      LOG.info("initConnectionUrlHooksss"+(System.currentTimeMillis()-starttime));
       if (updateData.urlHook != null) {
         if (badUrl != null) {
+          starttime = System.currentTimeMillis();
           updateData.urlHook.notifyBadConnectionUrl(badUrl);
+          LOG.info("updateDataurlHooksss"+(System.currentTimeMillis()-starttime));
         }
+        starttime = System.currentTimeMillis();
         connectUrl = updateData.urlHook.getJdoConnectionUrl(originalConf);
+        LOG.info("getJdoConnectionUrlsss"+(System.currentTimeMillis()-starttime));
       }
     } catch (Exception e) {
       LOG.error("Exception while getting connection URL from the hook: " +
-          e);
+              e);
     }
 
     if (connectUrl != null && !connectUrl.equals(currentUrl)) {
       LOG.error(
-          String.format("Overriding %s with %s",
-              HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(),
-              connectUrl));
+              String.format("Overriding %s with %s",
+                      HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(),
+                      connectUrl));
       activeConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(),
-          connectUrl);
+              connectUrl);
       return true;
     }
     return false;
@@ -85,15 +94,15 @@ public class MetaStoreInit {
 
   static String getConnectionURL(Configuration conf) {
     return conf.get(
-        HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), "");
+            HiveConf.ConfVars.METASTORECONNECTURLKEY.toString(), "");
   }
 
   // Multiple threads could try to initialize at the same time.
   synchronized private static void initConnectionUrlHook(HiveConf hiveConf,
-    MetaStoreInitData updateData) throws ClassNotFoundException {
+                                                         MetaStoreInitData updateData) throws ClassNotFoundException {
 
     String className =
-        hiveConf.get(HiveConf.ConfVars.METASTORECONNECTURLHOOK.toString(), "").trim();
+            hiveConf.get(HiveConf.ConfVars.METASTORECONNECTURLHOOK.toString(), "").trim();
     if (className.equals("")) {
       updateData.urlHookClassName = "";
       updateData.urlHook = null;
@@ -104,7 +113,7 @@ public class MetaStoreInit {
       updateData.urlHookClassName = className.trim();
 
       Class<?> urlHookClass = Class.forName(updateData.urlHookClassName, true,
-          JavaUtils.getClassLoader());
+              JavaUtils.getClassLoader());
       updateData.urlHook = (JDOConnectionURLHook) ReflectionUtils.newInstance(urlHookClass, null);
     }
     return;
