@@ -394,12 +394,15 @@ public class ObjectStore implements RawStore, Configurable {
     }
     // Password may no longer be in the conf, use getPassword()
     try {
-      String passwd =
-          ShimLoader.getHadoopShims().getPassword(conf, HiveConf.ConfVars.METASTOREPWD.varname);
+//      String passwd =
+//          ShimLoader.getHadoopShims().getPassword(conf, HiveConf.ConfVars.METASTOREPWD.varname);
+
+        //考虑ShimLoader.getHadoopShims().getPassword存在性能问题的暂时处理 2019/03/27
+        String passwd = "root";
       if (passwd != null && !passwd.isEmpty()) {
         prop.setProperty(HiveConf.ConfVars.METASTOREPWD.varname, passwd);
       }
-    } catch (IOException err) {
+    } catch (Exception err) {
       throw new RuntimeException("Error getting metastore password: " + err.getMessage(), err);
     }
 
