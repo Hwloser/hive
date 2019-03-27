@@ -273,6 +273,7 @@ public class ObjectStore implements RawStore, Configurable {
     // be many threads with ObjectStore instances. So the static variables
     // pmf and prop need to be protected with locks.
     pmfPropLock.lock();
+    long starttime = System.currentTimeMillis();
     try {
       isInitialized = false;
       hiveConf = conf;
@@ -323,6 +324,7 @@ public class ObjectStore implements RawStore, Configurable {
         LOG.info("Initialized ObjectStore");
       }
     } finally {
+      LOG.info("nolocktime:" + (System.currentTimeMillis() - starttime));
       pmfPropLock.unlock();
     }
   }
