@@ -2019,6 +2019,7 @@ public class Driver implements CommandProcessor {
       conf.set("mapreduce.workflow.node.name", tsk.getId());
       Utilities.setWorkflowAdjacencies(conf, plan);
       cxt.incCurJobNo(1);
+      conf.set("hive.cur.jobno", String.valueOf(cxt.getCurJobNo()));
       console.printInfo("Launching Job " + cxt.getCurJobNo() + " out of " + jobs);
     }
     tsk.initialize(conf, plan, cxt);
