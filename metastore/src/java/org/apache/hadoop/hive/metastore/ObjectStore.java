@@ -398,7 +398,7 @@ public class ObjectStore implements RawStore, Configurable {
     try {
 //      String passwd =
 //          ShimLoader.getHadoopShims().getPassword(conf, HiveConf.ConfVars.METASTOREPWD.varname);
-      String passwd = "root";
+      String passwd = "H#I$ve%128@234$DDL&DML#fdg";
       if (passwd != null && !passwd.isEmpty()) {
         prop.setProperty(HiveConf.ConfVars.METASTOREPWD.varname, passwd);
       }
