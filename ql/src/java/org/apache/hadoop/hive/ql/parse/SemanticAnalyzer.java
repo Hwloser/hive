@@ -6506,7 +6506,13 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           }
           colName = fixCtasColumnName(colName);
           col.setName(colName);
-          col.setType(colInfo.getType().getTypeName());
+          String typeName = colInfo.getType().getTypeName();
+          //The schema field can not be void type.
+          if (typeName.equals(serdeConstants.VOID_TYPE_NAME)) {
+            col.setType(serdeConstants.STRING_TYPE_NAME);
+          } else {
+            col.setType(colInfo.getType().getTypeName());
+          }
           field_schemas.add(col);
         }
 
