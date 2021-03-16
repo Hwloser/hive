@@ -33,11 +33,17 @@ import org.apache.hadoop.hive.ql.lockmgr.*;
 import org.apache.hadoop.hive.ql.lockmgr.HiveLockObject.HiveLockObjectData;
 import org.apache.hadoop.hive.ql.metadata.*;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -294,6 +300,9 @@ public class ZooKeeperHiveLockManager implements HiveLockManager {
         if (tryNum > 1) {
           Thread.sleep(sleepTime);
           prepareRetry();
+          if (tryNum >= 30 && tryNum % 5 ==0) {
+            prepareRetry(key);
+          }
         }
         ret = lockPrimitive(key, mode, keepAlive, parentCreated, conflictingLocks);
         if (ret != null) {
@@ -814,5 +823,53 @@ public class ZooKeeperHiveLockManager implements HiveLockManager {
   @Override
   public void prepareRetry() throws LockException {
   }
+
+    public void prepareRetry(HiveLockObject key) throws LockException {
+        try {
+            LOG.error("acquire Lock for :" + key.getDisplayName());
+            List<HiveLock> locks = getLocks(key, Boolean.TRUE, Boolean.TRUE);
+            for (HiveLock lock : locks) {
+                LOG.error("lockObjectData:" + lock.getHiveLockObject().getData().toString());
+                LOG.error("lockInfo:"+ sendGet(lock.getHiveLockObject().getData().getQueryId()));
+            }
+        } catch (Exception e) {
+            LOG.error("prepareRetry(HiveLockObject key) occur a exception:" + e.getMessage());
+        }
+
+    }
+    private String sendGet(String queryId) throws Exception {
+        BufferedReader in = null;
+        HttpURLConnection con = null;
+        try {
+            URI uri = new URIBuilder("http://ht-api.ztosys.com/common/queryInfoByQueryId").addParameter("queryId", queryId).build();
+            URL obj = new URL(uri.toString());
+            con = (HttpURLConnection) obj.openConnection();
+            //默认值我GET
+            con.setRequestMethod("GET");
+            con.setConnectTimeout(3000);
+            con.setReadTimeout(3000);
+            //添加请求头
+            con.setRequestProperty("User-Agent", "Mozilla/5.0");
+            int responseCode = con.getResponseCode();
+            in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            return response.toString();
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        } finally {
+            if (null != in) {
+                in.close();
+            }
+            if (con != null) {
+                con.disconnect();
+            }
+        }
+    }
 
 }
