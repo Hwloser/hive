@@ -826,22 +826,24 @@ public class ZooKeeperHiveLockManager implements HiveLockManager {
 
     public void prepareRetry(HiveLockObject key) throws LockException {
         try {
-            LOG.error("acquire Lock for :" + key.getDisplayName());
-            List<HiveLock> locks = getLocks(key, Boolean.TRUE, Boolean.TRUE);
+          LOG.error("acquire Lock for :" + key.getDisplayName());
+          String curr_queryId = key.getData().getQueryId();
+          List<HiveLock> locks = getLocks(key, Boolean.TRUE, Boolean.TRUE);
             for (HiveLock lock : locks) {
                 LOG.error("lockObjectData:" + lock.getHiveLockObject().getData().toString());
-                LOG.error("lockInfo:"+ sendGet(lock.getHiveLockObject().getData().getQueryId()));
+                LOG.error("lockInfo:"+ sendGet(curr_queryId,lock.getHiveLockObject().getData().getQueryId()));
             }
         } catch (Exception e) {
             LOG.error("prepareRetry(HiveLockObject key) occur a exception:" + e.getMessage());
         }
 
     }
-    private String sendGet(String queryId) throws Exception {
+    private String sendGet(String curr_queryId,String queryId) throws Exception {
         BufferedReader in = null;
         HttpURLConnection con = null;
         try {
-            URI uri = new URIBuilder("http://ht-api.ztosys.com/common/queryInfoByQueryId").addParameter("queryId", queryId).build();
+            URI uri = new URIBuilder("http://ht-api.ztosys.com/common/queryInfoByQueryId").
+                    addParameter("curr_queryId", curr_queryId).addParameter("queryId", queryId).build();
             URL obj = new URL(uri.toString());
             con = (HttpURLConnection) obj.openConnection();
             //默认值我GET
