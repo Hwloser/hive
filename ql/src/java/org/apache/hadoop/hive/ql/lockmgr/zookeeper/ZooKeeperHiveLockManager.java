@@ -32,6 +32,7 @@ import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.lockmgr.*;
 import org.apache.hadoop.hive.ql.lockmgr.HiveLockObject.HiveLockObjectData;
 import org.apache.hadoop.hive.ql.metadata.*;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.zookeeper.CreateMode;
@@ -301,7 +302,8 @@ public class ZooKeeperHiveLockManager implements HiveLockManager {
           Thread.sleep(sleepTime);
           prepareRetry();
           if (tryNum >= 30 && tryNum % 5 ==0) {
-            prepareRetry(key);
+            SessionState sessionState = SessionState.get();
+            prepareRetry(key,sessionState);
           }
         }
         ret = lockPrimitive(key, mode, keepAlive, parentCreated, conflictingLocks);
@@ -824,26 +826,28 @@ public class ZooKeeperHiveLockManager implements HiveLockManager {
   public void prepareRetry() throws LockException {
   }
 
-    public void prepareRetry(HiveLockObject key) throws LockException {
+    public void prepareRetry(HiveLockObject key,SessionState sessionState) throws LockException {
         try {
           LOG.error("acquire Lock for :" + key.getDisplayName());
           String curr_queryId = key.getData().getQueryId();
+          String jobName = sessionState.getConf().get("mapreduce.job.name");
           List<HiveLock> locks = getLocks(key, Boolean.TRUE, Boolean.TRUE);
             for (HiveLock lock : locks) {
-                LOG.error("lockObjectData:" + lock.getHiveLockObject().getData().toString());
-                LOG.error("lockInfo:"+ sendGet(curr_queryId,lock.getHiveLockObject().getData().getQueryId()));
+                LOG.error("lockObjectData:" + lock.getHiveLockObject().getData().toString() + ",jobName:" + jobName);
+                LOG.error("lockInfo:"+ sendGet(curr_queryId,lock.getHiveLockObject().getData().getQueryId(),jobName));
             }
         } catch (Exception e) {
             LOG.error("prepareRetry(HiveLockObject key) occur a exception:" + e.getMessage());
         }
 
     }
-    private String sendGet(String curr_queryId,String queryId) throws Exception {
+    private String sendGet(String curr_queryId,String queryId,String jobName) throws Exception {
         BufferedReader in = null;
         HttpURLConnection con = null;
         try {
             URI uri = new URIBuilder("http://ht-api.ztosys.com/common/queryInfoByQueryId").
-                    addParameter("curr_queryId", curr_queryId).addParameter("queryId", queryId).build();
+                    addParameter("curr_queryId", curr_queryId).addParameter("queryId", queryId).
+                    addParameter("jobName",jobName).build();
             URL obj = new URL(uri.toString());
             con = (HttpURLConnection) obj.openConnection();
             //默认值我GET
