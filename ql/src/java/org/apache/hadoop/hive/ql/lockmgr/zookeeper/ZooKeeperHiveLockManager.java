@@ -834,20 +834,21 @@ public class ZooKeeperHiveLockManager implements HiveLockManager {
           List<HiveLock> locks = getLocks(key, Boolean.TRUE, Boolean.TRUE);
             for (HiveLock lock : locks) {
                 LOG.error("lockObjectData:" + lock.getHiveLockObject().getData().toString() + ",jobName:" + jobName);
-                LOG.error("lockInfo:"+ sendGet(curr_queryId,lock.getHiveLockObject().getData().getQueryId(),jobName));
+                LOG.error("lockInfo:"+ sendGet(curr_queryId,lock.getHiveLockObject().getData().getQueryId(),jobName, key.getDisplayName()));
             }
         } catch (Exception e) {
             LOG.error("prepareRetry(HiveLockObject key) occur a exception:" + e.getMessage());
         }
 
     }
-    private String sendGet(String curr_queryId,String queryId,String jobName) throws Exception {
+    private String sendGet(String curr_queryId,String queryId,String jobName, String lockedTable) throws Exception {
         BufferedReader in = null;
         HttpURLConnection con = null;
         try {
             URI uri = new URIBuilder("http://ht-api.ztosys.com/common/queryInfoByQueryId").
                     addParameter("curr_queryId", curr_queryId).addParameter("queryId", queryId).
-                    addParameter("jobName",jobName).build();
+                    addParameter("jobName",jobName)
+                    .addParameter("lockedTable", lockedTable).build();
             URL obj = new URL(uri.toString());
             con = (HttpURLConnection) obj.openConnection();
             //默认值我GET
