@@ -18,32 +18,8 @@
 
 package org.apache.hadoop.hive.ql.exec;
 
-import static org.apache.hadoop.hive.ql.exec.Utilities.getFileExtension;
-import static org.apache.hadoop.hive.ql.exec.Utilities.DEPRECATED_MAPRED_DFSCLIENT_PARALLELISM_MAX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -54,7 +30,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.ql.Context;
-import org.apache.hadoop.hive.ql.io.*;
+import org.apache.hadoop.hive.ql.io.ContentSummaryInputFormat;
+import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
+import org.apache.hadoop.hive.ql.io.HiveInputFormat;
+import org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.InputEstimator;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -62,16 +41,25 @@ import org.apache.hadoop.hive.ql.plan.*;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFFromUtcTimestamp;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.InputFormat;
-import org.apache.hadoop.mapred.InputSplit;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.RecordReader;
-import org.junit.Assert;
+import org.apache.hadoop.mapred.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
+import static org.apache.hadoop.hive.ql.exec.Utilities.DEPRECATED_MAPRED_DFSCLIENT_PARALLELISM_MAX;
+import static org.apache.hadoop.hive.ql.exec.Utilities.getFileExtension;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 
 public class TestUtilities {
@@ -717,4 +705,96 @@ public class TestUtilities {
       }
     }
   }
+
+    @Test
+  public void testGetInputSummaryPool() throws ExecutionException, InterruptedException, IOException {
+    ExecutorService pool = mock(ExecutorService.class);
+    when(pool.submit(any(Runnable.class))).thenReturn(mock(Future.class));
+
+    Set<Path> pathNeedProcess = new HashSet<>();
+    pathNeedProcess.add(new Path("dummy-path1"));
+    pathNeedProcess.add(new Path("dummy-path2"));
+    pathNeedProcess.add(new Path("dummy-path3"));
+
+    SessionState.start(new HiveConf());
+    JobConf jobConf = new JobConf();
+    Context context = new Context(jobConf);
+
+    Utilities.getInputSummaryWithPool(context, pathNeedProcess, mock(MapWork.class), new long[3], pool);
+    verify(pool, times(3)).submit(any(Runnable.class));
+    verify(pool).shutdown();
+    verify(pool).shutdownNow();
+  }
+
+
+  @Test
+  public void testGetInputSummaryPoolAndFailure() throws ExecutionException, InterruptedException, IOException {
+        ExecutorService pool = mock(ExecutorService.class);
+        when(pool.submit(any(Runnable.class))).thenReturn(mock(Future.class));
+
+                Set<Path> pathNeedProcess = new HashSet<>();
+        pathNeedProcess.add(new Path("dummy-path1"));
+        pathNeedProcess.add(new Path("dummy-path2"));
+        pathNeedProcess.add(new Path("dummy-path3"));
+
+                SessionState.start(new HiveConf());
+        JobConf jobConf = new JobConf();
+        Context context = new Context(jobConf);
+
+                Utilities.getInputSummaryWithPool(context, pathNeedProcess, mock(MapWork.class), new long[3], pool);
+        verify(pool, times(3)).submit(any(Runnable.class));
+        verify(pool).shutdown();
+        verify(pool).shutdownNow();
+      }
+
+          @Test
+  public void testGetInputPathsPool() throws IOException, ExecutionException, InterruptedException {
+        List<Path> pathsToAdd = new ArrayList<>();
+        Path path = new Path("dummy-path");
+
+                pathsToAdd.add(path);
+        pathsToAdd.add(path);
+        pathsToAdd.add(path);
+
+                ExecutorService pool = mock(ExecutorService.class);
+        Future mockFuture = mock(Future.class);
+
+                when(mockFuture.get()).thenReturn(path);
+        when(pool.submit(any(Callable.class))).thenReturn(mockFuture);
+
+                Utilities.getInputPathsWithPool(mock(JobConf.class), mock(MapWork.class), mock(Path.class), mock(Context.class),
+                                false, pathsToAdd, pool);
+
+                verify(pool, times(3)).submit(any(Callable.class));
+        verify(pool).shutdown();
+        verify(pool).shutdownNow();
+      }
+
+          @Test
+  public void testGetInputPathsPoolAndFailure() throws IOException, ExecutionException, InterruptedException {
+        List<Path> pathsToAdd = new ArrayList<>();
+        Path path = new Path("dummy-path");
+
+                pathsToAdd.add(path);
+        pathsToAdd.add(path);
+        pathsToAdd.add(path);
+
+                ExecutorService pool = mock(ExecutorService.class);
+        Future mockFuture = mock(Future.class);
+
+                when(mockFuture.get()).thenThrow(new RuntimeException());
+        when(pool.submit(any(Callable.class))).thenReturn(mockFuture);
+
+               Exception e = null;
+        try {
+            Utilities.getInputPathsWithPool(mock(JobConf.class), mock(MapWork.class), mock(Path.class), mock(Context.class),
+                            false, pathsToAdd, pool);
+          } catch (Exception thrownException) {
+            e = thrownException;
+          }
+        assertNotNull(e);
+
+                verify(pool, times(3)).submit(any(Callable.class));
+        verify(pool).shutdownNow();
+      }
 }

@@ -266,11 +266,11 @@ public final class Utilities {
   }
 
   private static ThreadLocal<Map<Path, BaseWork>> gWorkMap =
-      new ThreadLocal<Map<Path, BaseWork>>() {
-    protected Map<Path, BaseWork> initialValue() {
-      return new HashMap<Path, BaseWork>();
-    }
-  };
+          new ThreadLocal<Map<Path, BaseWork>>() {
+            protected Map<Path, BaseWork> initialValue() {
+              return new HashMap<Path, BaseWork>();
+            }
+          };
 
   private static final String CLASS_NAME = Utilities.class.getName();
   private static final Log LOG = LogFactory.getLog(CLASS_NAME);
@@ -330,7 +330,7 @@ public final class Utilities {
   }
 
   public static Path setMergeWork(JobConf conf, MergeJoinWork mergeJoinWork, Path mrScratchDir,
-      boolean useCache) {
+                                  boolean useCache) {
     for (BaseWork baseWork : mergeJoinWork.getBaseWorkList()) {
       setBaseWork(conf, baseWork, mrScratchDir, baseWork.getName() + MERGE_PLAN_NAME, useCache);
       String prefixes = conf.get(DagUtils.TEZ_MERGE_WORK_FILE_PREFIXES);
@@ -348,7 +348,7 @@ public final class Utilities {
 
   public static BaseWork getMergeWork(JobConf jconf) {
     if ((jconf.get(DagUtils.TEZ_MERGE_CURRENT_MERGE_FILE_PREFIX) == null)
-        || (jconf.get(DagUtils.TEZ_MERGE_CURRENT_MERGE_FILE_PREFIX).isEmpty())) {
+            || (jconf.get(DagUtils.TEZ_MERGE_CURRENT_MERGE_FILE_PREFIX).isEmpty())) {
       return null;
     }
     return getMergeWork(jconf, jconf.get(DagUtils.TEZ_MERGE_CURRENT_MERGE_FILE_PREFIX));
@@ -363,7 +363,7 @@ public final class Utilities {
   }
 
   public static void cacheBaseWork(Configuration conf, String name, BaseWork work,
-      Path hiveScratchDir) {
+                                   Path hiveScratchDir) {
     try {
       setPlanPath(conf, hiveScratchDir);
       setBaseWork(conf, name, work);
@@ -448,14 +448,14 @@ public final class Utilities {
             gWork = deserializePlan(in, PartialScanWork.class,conf);
           } else {
             throw new RuntimeException("unable to determine work from configuration ."
-                + MAPRED_MAPPER_CLASS + " was "+ conf.get(MAPRED_MAPPER_CLASS)) ;
+                    + MAPRED_MAPPER_CLASS + " was "+ conf.get(MAPRED_MAPPER_CLASS)) ;
           }
         } else if (REDUCE_PLAN_NAME.equals(name)) {
           if(ExecReducer.class.getName().equals(conf.get(MAPRED_REDUCER_CLASS))) {
             gWork = deserializePlan(in, ReduceWork.class, conf);
           } else {
             throw new RuntimeException("unable to determine work from configuration ."
-                + MAPRED_REDUCER_CLASS +" was "+ conf.get(MAPRED_REDUCER_CLASS)) ;
+                    + MAPRED_REDUCER_CLASS +" was "+ conf.get(MAPRED_REDUCER_CLASS)) ;
           }
         } else if (name.contains(MERGE_PLAN_NAME)) {
           gWork = deserializePlan(in, MapWork.class, conf);
@@ -504,7 +504,7 @@ public final class Utilities {
           return;
         }
         conf.setStrings("mapreduce.workflow.adjacency."+adj.getNode(),
-            children.toArray(new String[children.size()]));
+                children.toArray(new String[children.size()]));
       }
     } catch (IOException e) {
     }
@@ -518,7 +518,7 @@ public final class Utilities {
     ArrayList<String> ret = new ArrayList<String>();
     for (FieldSchema f : fl) {
       ret.add(f.getName() + " " + f.getType()
-          + (f.getComment() != null ? (" " + f.getComment()) : ""));
+              + (f.getComment() != null ? (" " + f.getComment()) : ""));
     }
     return ret;
   }
@@ -530,7 +530,7 @@ public final class Utilities {
     @Override
     protected Expression instantiate(Object oldInstance, Encoder out) {
       return new Expression(Enum.class, "valueOf", new Object[] {oldInstance.getClass(),
-          ((Enum<?>) oldInstance).name()});
+              ((Enum<?>) oldInstance).name()});
     }
 
     @Override
@@ -722,7 +722,7 @@ public final class Utilities {
         }
         LOG.info("Setting plan: "+planPath.toUri().getPath());
         conf.set(planPath.toUri().getPath(),
-            Base64.encodeBase64String(byteOut.toByteArray()));
+                Base64.encodeBase64String(byteOut.toByteArray()));
       } else {
         // use the default file system of the conf
         FileSystem fs = planPath.getFileSystem(conf);
@@ -876,7 +876,7 @@ public final class Utilities {
    * Kryo serializer for timestamp.
    */
   private static class TimestampSerializer extends
-  com.esotericsoftware.kryo.Serializer<Timestamp> {
+          com.esotericsoftware.kryo.Serializer<Timestamp> {
 
     @Override
     public Timestamp read(Kryo kryo, Input input, Class<Timestamp> clazz) {
@@ -892,11 +892,11 @@ public final class Utilities {
     }
   }
 
-   /** Custom Kryo serializer for sql date, otherwise Kryo gets confused between
+  /** Custom Kryo serializer for sql date, otherwise Kryo gets confused between
    java.sql.Date and java.util.Date while deserializing
    */
   private static class SqlDateSerializer extends
-    com.esotericsoftware.kryo.Serializer<java.sql.Date> {
+          com.esotericsoftware.kryo.Serializer<java.sql.Date> {
 
     @Override
     public java.sql.Date read(Kryo kryo, Input input, Class<java.sql.Date> clazz) {
@@ -932,7 +932,7 @@ public final class Utilities {
    * This is from kryo-serializers package. Added explicitly to avoid classpath issues.
    */
   private static class ArraysAsListSerializer
-      extends com.esotericsoftware.kryo.Serializer<List<?>> {
+          extends com.esotericsoftware.kryo.Serializer<List<?>> {
 
     private Field _arrayField;
 
@@ -1029,7 +1029,7 @@ public final class Utilities {
    * superclass declares most of its fields transient.
    */
   private static class CopyOnFirstWritePropertiesSerializer extends
-      com.esotericsoftware.kryo.serializers.MapSerializer {
+          com.esotericsoftware.kryo.serializers.MapSerializer {
 
     @Override
     public void write(Kryo kryo, Output output, Map map) {
@@ -1053,8 +1053,8 @@ public final class Utilities {
     serializePlan(roots, baos, conf, true);
     @SuppressWarnings("unchecked")
     List<Operator<?>> result =
-        deserializePlan(new ByteArrayInputStream(baos.toByteArray()),
-        roots.getClass(), conf, true);
+            deserializePlan(new ByteArrayInputStream(baos.toByteArray()),
+                    roots.getClass(), conf, true);
     return result;
   }
 
@@ -1126,7 +1126,7 @@ public final class Utilities {
     Configuration conf = new HiveConf();
     serializePlan(plan, baos, conf, true);
     MapredWork newPlan = deserializePlan(new ByteArrayInputStream(baos.toByteArray()),
-        MapredWork.class, conf, true);
+            MapredWork.class, conf, true);
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.CLONE_PLAN);
     return newPlan;
   }
@@ -1143,7 +1143,7 @@ public final class Utilities {
     Configuration conf = new HiveConf();
     serializePlan(plan, baos, conf, true);
     BaseWork newPlan = deserializePlan(new ByteArrayInputStream(baos.toByteArray()),
-        plan.getClass(), conf, true);
+            plan.getClass(), conf, true);
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.CLONE_PLAN);
     return newPlan;
   }
@@ -1378,17 +1378,17 @@ public final class Utilities {
     Properties props = tbl.getMetadata();
     props.put(serdeConstants.SERIALIZATION_LIB, tbl.getDeserializer().getClass().getName());
     return (new TableDesc(tbl.getInputFormatClass(), tbl
-        .getOutputFormatClass(), props));
+            .getOutputFormatClass(), props));
   }
 
   // column names and column types are all delimited by comma
   public static TableDesc getTableDesc(String cols, String colTypes) {
     return (new TableDesc(SequenceFileInputFormat.class,
-        HiveSequenceFileOutputFormat.class, Utilities.makeProperties(
-        serdeConstants.SERIALIZATION_FORMAT, "" + Utilities.ctrlaCode,
-        serdeConstants.LIST_COLUMNS, cols,
-        serdeConstants.LIST_COLUMN_TYPES, colTypes,
-        serdeConstants.SERIALIZATION_LIB,LazySimpleSerDe.class.getName())));
+            HiveSequenceFileOutputFormat.class, Utilities.makeProperties(
+            serdeConstants.SERIALIZATION_FORMAT, "" + Utilities.ctrlaCode,
+            serdeConstants.LIST_COLUMNS, cols,
+            serdeConstants.LIST_COLUMN_TYPES, colTypes,
+            serdeConstants.SERIALIZATION_LIB,LazySimpleSerDe.class.getName())));
   }
 
   public static PartitionDesc getPartitionDesc(Partition part) throws HiveException {
@@ -1396,7 +1396,7 @@ public final class Utilities {
   }
 
   public static PartitionDesc getPartitionDescFromTableDesc(TableDesc tblDesc, Partition part)
-      throws HiveException {
+          throws HiveException {
     return new PartitionDesc(part, tblDesc);
   }
 
@@ -1430,7 +1430,7 @@ public final class Utilities {
   }
 
   public static boolean contentsEqual(InputStream is1, InputStream is2, boolean ignoreWhitespace)
-      throws IOException {
+          throws IOException {
     try {
       if ((is1 == is2) || (is1 == null && is2 == null)) {
         return true;
@@ -1545,7 +1545,7 @@ public final class Utilities {
    * @return compressed output stream
    */
   public static OutputStream createCompressedStream(JobConf jc, OutputStream out)
-      throws IOException {
+          throws IOException {
     boolean isCompressed = FileOutputFormat.getCompressOutput(jc);
     return createCompressedStream(jc, out, isCompressed);
   }
@@ -1563,10 +1563,10 @@ public final class Utilities {
    * @return compressed output stream
    */
   public static OutputStream createCompressedStream(JobConf jc, OutputStream out,
-      boolean isCompressed) throws IOException {
+                                                    boolean isCompressed) throws IOException {
     if (isCompressed) {
       Class<? extends CompressionCodec> codecClass = FileOutputFormat.getOutputCompressorClass(jc,
-          DefaultCodec.class);
+              DefaultCodec.class);
       CompressionCodec codec = ReflectionUtils.newInstance(codecClass, jc);
       return codec.createOutputStream(out);
     } else {
@@ -1608,14 +1608,14 @@ public final class Utilities {
    * @return the required file extension (example: .gz)
    */
   public static String getFileExtension(JobConf jc, boolean isCompressed,
-      HiveOutputFormat<?, ?> hiveOutputFormat) {
+                                        HiveOutputFormat<?, ?> hiveOutputFormat) {
     String extension = HiveConf.getVar(jc, HiveConf.ConfVars.OUTPUT_FILE_EXTENSION);
     if (!StringUtils.isEmpty(extension)) {
       return extension;
     }
     if ((hiveOutputFormat instanceof HiveIgnoreKeyTextOutputFormat) && isCompressed) {
       Class<? extends CompressionCodec> codecClass = FileOutputFormat.getOutputCompressorClass(jc,
-          DefaultCodec.class);
+              DefaultCodec.class);
       CompressionCodec codec = ReflectionUtils.newInstance(codecClass, jc);
       return codec.getDefaultExtension();
     }
@@ -1638,7 +1638,7 @@ public final class Utilities {
    * @return output stream over the created sequencefile
    */
   public static SequenceFile.Writer createSequenceWriter(JobConf jc, FileSystem fs, Path file,
-      Class<?> keyClass, Class<?> valClass, Progressable progressable) throws IOException {
+                                                         Class<?> keyClass, Class<?> valClass, Progressable progressable) throws IOException {
     boolean isCompressed = FileOutputFormat.getCompressOutput(jc);
     return createSequenceWriter(jc, fs, file, keyClass, valClass, isCompressed, progressable);
   }
@@ -1660,8 +1660,8 @@ public final class Utilities {
    * @return output stream over the created sequencefile
    */
   public static SequenceFile.Writer createSequenceWriter(JobConf jc, FileSystem fs, Path file,
-      Class<?> keyClass, Class<?> valClass, boolean isCompressed, Progressable progressable)
-      throws IOException {
+                                                         Class<?> keyClass, Class<?> valClass, boolean isCompressed, Progressable progressable)
+          throws IOException {
     CompressionCodec codec = null;
     CompressionType compressionType = CompressionType.NONE;
     Class codecClass = null;
@@ -1671,7 +1671,7 @@ public final class Utilities {
       codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, jc);
     }
     return SequenceFile.createWriter(fs, jc, file, keyClass, valClass, compressionType, codec,
-      progressable);
+            progressable);
 
   }
 
@@ -1688,7 +1688,7 @@ public final class Utilities {
    * @return output stream over the created rcfile
    */
   public static RCFile.Writer createRCFileWriter(JobConf jc, FileSystem fs, Path file,
-      boolean isCompressed, Progressable progressable) throws IOException {
+                                                 boolean isCompressed, Progressable progressable) throws IOException {
     CompressionCodec codec = null;
     if (isCompressed) {
       Class<?> codecClass = FileOutputFormat.getOutputCompressorClass(jc, DefaultCodec.class);
@@ -1803,7 +1803,7 @@ public final class Utilities {
    * @throws IOException
    */
   public static void renameOrMoveFiles(Configuration conf, FileSystem fs, Path src, Path dst) throws IOException,
-      HiveException {
+          HiveException {
     if (!fs.exists(dst)) {
       final boolean shouldRenameDirectoryInParallel = BlobStorageUtils.shouldRenameDirectoryInParallel(conf, fs, fs);
       if (shouldRenameDirectoryInParallel && conf.getInt(ConfVars.HIVE_MOVE_FILES_THREAD_COUNT.varname, 25) > 0) {
@@ -1850,7 +1850,7 @@ public final class Utilities {
    * matching for attempts #'s 0-999999.
    */
   private static final Pattern FILE_NAME_TO_TASK_ID_REGEX =
-      Pattern.compile("^.*?([0-9]+)(_[0-9]{1,6})?(\\..*)?$");
+          Pattern.compile("^.*?([0-9]+)(_[0-9]{1,6})?(\\..*)?$");
 
   /**
    * Some jobs like "INSERT INTO" jobs create copies of files like 0000001_0_copy_2.
@@ -1863,25 +1863,25 @@ public final class Utilities {
    */
   private static final String COPY_KEYWORD = "_copy_"; // copy keyword
   private static final Pattern COPY_FILE_NAME_TO_TASK_ID_REGEX =
-      Pattern.compile("^.*?"+ // any prefix
-                      "([0-9]+)"+ // taskId
-                      "(_)"+ // separator
-                      "([0-9]{1,6})?"+ // attemptId (limited to 6 digits)
-                      "((_)(\\Bcopy\\B)(_)" +
-                      "([0-9]{1,6})$)?"+ // copy file index
-                      "(\\..*)?$"); // any suffix/file extension
+          Pattern.compile("^.*?"+ // any prefix
+                  "([0-9]+)"+ // taskId
+                  "(_)"+ // separator
+                  "([0-9]{1,6})?"+ // attemptId (limited to 6 digits)
+                  "((_)(\\Bcopy\\B)(_)" +
+                  "([0-9]{1,6})$)?"+ // copy file index
+                  "(\\..*)?$"); // any suffix/file extension
 
   /**
    * This retruns prefix part + taskID for bucket join for partitioned table
    */
   private static final Pattern FILE_NAME_PREFIXED_TASK_ID_REGEX =
-      Pattern.compile("^.*?((\\(.*\\))?[0-9]+)(_[0-9]{1,6})?(\\..*)?$");
+          Pattern.compile("^.*?((\\(.*\\))?[0-9]+)(_[0-9]{1,6})?(\\..*)?$");
 
   /**
    * This breaks a prefixed bucket number into the prefix and the taskID
    */
   private static final Pattern PREFIXED_TASK_ID_REGEX =
-      Pattern.compile("^(.*?\\(.*\\))?([0-9]+)$");
+          Pattern.compile("^(.*?\\(.*\\))?([0-9]+)$");
 
   /**
    * Get the task id from the filename. It is assumed that the filename is derived from the output
@@ -1915,7 +1915,7 @@ public final class Utilities {
     Matcher m = pattern.matcher(taskId);
     if (!m.matches()) {
       LOG.warn("Unable to get task id from file name: " + filename + ". Using last component"
-          + taskId + " as task id.");
+              + taskId + " as task id.");
     } else {
       taskId = m.group(1);
     }
@@ -1965,7 +1965,7 @@ public final class Utilities {
     Matcher m = PREFIXED_TASK_ID_REGEX.matcher(strBucketNum);
     if (!m.matches()) {
       LOG.warn("Unable to determine bucket number from file ID: " + strBucketNum + ". Using " +
-          "file ID as bucket number.");
+              "file ID as bucket number.");
       return adjustBucketNumLen(strBucketNum, taskId);
     } else {
       String adjustedBucketNum = adjustBucketNumLen(m.group(2), taskId);
@@ -2000,7 +2000,7 @@ public final class Utilities {
    * @return
    */
   private static String replaceTaskIdFromFilename(String filename, String oldTaskId,
-      String newTaskId) {
+                                                  String newTaskId) {
 
     String[] spl = filename.split(oldTaskId);
 
@@ -2033,9 +2033,9 @@ public final class Utilities {
   }
 
   public static void mvFileToFinalPath(Path specPath, Configuration hconf,
-      boolean success, Log log, DynamicPartitionCtx dpCtx, FileSinkDesc conf,
-      Reporter reporter) throws IOException,
-      HiveException {
+                                       boolean success, Log log, DynamicPartitionCtx dpCtx, FileSinkDesc conf,
+                                       Reporter reporter) throws IOException,
+          HiveException {
 
     FileSystem fs = specPath.getFileSystem(hconf);
     Path tmpPath = Utilities.toTempPath(specPath);
@@ -2044,7 +2044,7 @@ public final class Utilities {
       if (fs.exists(tmpPath)) {
         // remove any tmp file or double-committed output files
         List<Path> emptyBuckets =
-            Utilities.removeTempOrDuplicateFiles(fs, tmpPath, dpCtx);
+                Utilities.removeTempOrDuplicateFiles(fs, tmpPath, dpCtx);
         // create empty buckets if necessary
         if (emptyBuckets.size() > 0) {
           createEmptyBuckets(hconf, emptyBuckets, conf, reporter);
@@ -2072,8 +2072,8 @@ public final class Utilities {
    * @throws IOException
    */
   private static void createEmptyBuckets(Configuration hconf, List<Path> paths,
-      FileSinkDesc conf, Reporter reporter)
-      throws HiveException, IOException {
+                                         FileSinkDesc conf, Reporter reporter)
+          throws HiveException, IOException {
 
     JobConf jc;
     if (hconf instanceof JobConf) {
@@ -2101,8 +2101,8 @@ public final class Utilities {
 
     for (Path path : paths) {
       RecordWriter writer = HiveFileFormatUtils.getRecordWriter(
-          jc, hiveOutputFormat, outputClass, isCompressed,
-          tableInfo.getProperties(), path, reporter);
+              jc, hiveOutputFormat, outputClass, isCompressed,
+              tableInfo.getProperties(), path, reporter);
       writer.close(false);
       LOG.info("created empty bucket for enforcing bucketing at " + path);
     }
@@ -2121,7 +2121,7 @@ public final class Utilities {
    * @return a list of path names corresponding to should-be-created empty buckets.
    */
   public static List<Path> removeTempOrDuplicateFiles(FileSystem fs, Path path,
-      DynamicPartitionCtx dpCtx) throws IOException {
+                                                      DynamicPartitionCtx dpCtx) throws IOException {
     if (path == null) {
       return null;
     }
@@ -2133,7 +2133,7 @@ public final class Utilities {
 
       for (int i = 0; i < parts.length; ++i) {
         assert parts[i].isDir() : "dynamic partition " + parts[i].getPath()
-            + " is not a directory";
+                + " is not a directory";
         FileStatus[] items = fs.listStatus(parts[i].getPath());
 
         // remove empty directory since DP insert should not generate empty partitions.
@@ -2172,7 +2172,7 @@ public final class Utilities {
   }
 
   public static HashMap<String, FileStatus> removeTempOrDuplicateFiles(FileStatus[] items,
-      FileSystem fs) throws IOException {
+                                                                       FileSystem fs) throws IOException {
 
     if (items == null || fs == null) {
       return null;
@@ -2219,19 +2219,19 @@ public final class Utilities {
             long len2 = taskIdToFile.get(taskId).getLen();
             if (!fs.delete(toDelete.getPath(), true)) {
               throw new IOException(
-                  "Unable to delete duplicate file: " + toDelete.getPath()
-                      + ". Existing file: " +
-                      taskIdToFile.get(taskId).getPath());
+                      "Unable to delete duplicate file: " + toDelete.getPath()
+                              + ". Existing file: " +
+                              taskIdToFile.get(taskId).getPath());
             } else {
               LOG.warn("Duplicate taskid file removed: " + toDelete.getPath() +
-                  " with length "
-                  + len1 + ". Existing file: " +
-                  taskIdToFile.get(taskId).getPath() + " with length "
-                  + len2);
+                      " with length "
+                      + len1 + ". Existing file: " +
+                      taskIdToFile.get(taskId).getPath() + " with length "
+                      + len2);
             }
           } else {
             LOG.info(one.getPath() + " file identified as duplicate. This file is" +
-                " not deleted as it has copySuffix.");
+                    " not deleted as it has copySuffix.");
           }
         }
       }
@@ -2291,7 +2291,7 @@ public final class Utilities {
           }
         } catch (IOException e) {
           throw new RuntimeException("Cannot validate file " + one + "due to exception: "
-              + e.getMessage(), e);
+                  + e.getMessage(), e);
         }
       }
       return StringUtils.join(realFiles, ",");
@@ -2419,7 +2419,7 @@ public final class Utilities {
       }
     }
     JavaUtils.closeClassLoader(loader);
-   // This loader is closed, remove it from cached registry loaders to avoid removing it again.
+    // This loader is closed, remove it from cached registry loaders to avoid removing it again.
     Registry reg = SessionState.getRegistry();
     if(reg != null) {
       reg.removeFromUDFLoaders(loader);
@@ -2544,7 +2544,7 @@ public final class Utilities {
   }
 
   public static void validateColumnNames(List<String> colNames, List<String> checkCols)
-      throws SemanticException {
+          throws SemanticException {
     Iterator<String> checkColsIter = checkCols.iterator();
     while (checkColsIter.hasNext()) {
       String toCheck = checkColsIter.next();
@@ -2663,7 +2663,7 @@ public final class Utilities {
         listingMaxThreads = conf.getInt(DEPRECATED_MAPRED_DFSCLIENT_PARALLELISM_MAX, 0);
         if (listingMaxThreads > 0) {
           LOG.warn("Deprecated configuration is used: " + DEPRECATED_MAPRED_DFSCLIENT_PARALLELISM_MAX +
-              ". Please use " + ConfVars.HIVE_EXEC_INPUT_LISTING_MAX_THREADS.varname);
+                  ". Please use " + ConfVars.HIVE_EXEC_INPUT_LISTING_MAX_THREADS.varname);
         }
       }
 
@@ -2688,13 +2688,13 @@ public final class Utilities {
    * @throws IOException
    */
   public static ContentSummary getInputSummary(final Context ctx, MapWork work, PathFilter filter)
-      throws IOException {
+          throws IOException {
     PerfLogger perfLogger = SessionState.getPerfLogger();
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.INPUT_SUMMARY);
 
     long[] summary = {0, 0, 0};
 
-    final Set<String> pathNeedProcess = new HashSet<>();
+    final Set<Path> pathNeedProcess = new HashSet<>();
 
     // Since multiple threads could call this method concurrently, locking
     // this method will avoid number of threads out of control.
@@ -2712,7 +2712,7 @@ public final class Utilities {
           if (path == null) {
             continue;
           }
-          pathNeedProcess.add(path);
+          pathNeedProcess.add(p);
         } else {
           summary[0] += cs.getLength();
           summary[1] += cs.getFileCount();
@@ -2722,154 +2722,166 @@ public final class Utilities {
 
       // Process the case when name node call is needed
       final Map<String, ContentSummary> resultMap = new ConcurrentHashMap<String, ContentSummary>();
-      ArrayList<Future<?>> results = new ArrayList<Future<?>>();
       final ExecutorService executor;
 
       int numExecutors = getMaxExecutorsForInputListing(ctx.getConf(), pathNeedProcess.size());
       if (numExecutors > 1) {
         LOG.info("Using " + numExecutors + " threads for getContentSummary");
         executor = Executors.newFixedThreadPool(numExecutors,
-            new ThreadFactoryBuilder().setDaemon(true)
-                .setNameFormat("Get-Input-Summary-%d").build());
+                new ThreadFactoryBuilder().setDaemon(true)
+                        .setNameFormat("Get-Input-Summary-%d").build());
       } else {
         executor = null;
       }
 
-      HiveInterruptCallback interrup = HiveInterruptUtils.add(new HiveInterruptCallback() {
-        @Override
-        public void interrupt() {
-          for (String path : pathNeedProcess) {
-            try {
-              new Path(path).getFileSystem(ctx.getConf()).close();
-            } catch (IOException ignore) {
-                LOG.debug(ignore);
-            }
-          }
-          if (executor != null) {
-            executor.shutdownNow();
-          }
-        }
-      });
-      try {
-        Configuration conf = ctx.getConf();
-        JobConf jobConf = new JobConf(conf);
-        for (String path : pathNeedProcess) {
-          final Path p = new Path(path);
-          final String pathStr = path;
-          // All threads share the same Configuration and JobConf based on the
-          // assumption that they are thread safe if only read operations are
-          // executed. It is not stated in Hadoop's javadoc, the sourcce codes
-          // clearly showed that they made efforts for it and we believe it is
-          // thread safe. Will revisit this piece of codes if we find the assumption
-          // is not correct.
-          final Configuration myConf = conf;
-          final JobConf myJobConf = jobConf;
-          final Map<String, Operator<?>> aliasToWork = work.getAliasToWork();
-          final Map<String, ArrayList<String>> pathToAlias = work.getPathToAliases();
-          final PartitionDesc partDesc = work.getPathToPartitionInfo().get(
-              p.toString());
-          Runnable r = new Runnable() {
-            @Override
-            public void run() {
-              try {
-                Class<? extends InputFormat> inputFormatCls = partDesc
-                    .getInputFileFormatClass();
-                InputFormat inputFormatObj = HiveInputFormat.getInputFormatFromCache(
-                    inputFormatCls, myJobConf);
-                if (inputFormatObj instanceof ContentSummaryInputFormat) {
-                  ContentSummaryInputFormat cs = (ContentSummaryInputFormat) inputFormatObj;
-                  resultMap.put(pathStr, cs.getContentSummary(p, myJobConf));
-                  return;
-                }
+      ContentSummary cs = getInputSummaryWithPool(ctx, pathNeedProcess, work, summary, executor);
+      perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.INPUT_SUMMARY);
+      return cs;
+    }
+  }
 
-                String metaTableStorage = null;
-                if (partDesc.getTableDesc() != null &&
-                    partDesc.getTableDesc().getProperties() != null) {
-                  metaTableStorage = partDesc.getTableDesc().getProperties()
-                      .getProperty(hive_metastoreConstants.META_TABLE_STORAGE, null);
-                }
-                if (partDesc.getProperties() != null) {
-                  metaTableStorage = partDesc.getProperties()
-                      .getProperty(hive_metastoreConstants.META_TABLE_STORAGE, metaTableStorage);
-                }
+  @VisibleForTesting
+  static ContentSummary getInputSummaryWithPool(final Context ctx, final Set<Path> pathNeedProcess, MapWork work,
+                                                long[] summary, final ExecutorService executor) throws IOException {
+    List<Future<?>> results = new ArrayList<Future<?>>();
+    final Map<String, ContentSummary> resultMap = new ConcurrentHashMap<String, ContentSummary>();
 
-                HiveStorageHandler handler = HiveUtils.getStorageHandler(myConf, metaTableStorage);
-                if (handler instanceof InputEstimator) {
-                  long total = 0;
-                  TableDesc tableDesc = partDesc.getTableDesc();
-                  InputEstimator estimator = (InputEstimator) handler;
-                  for (String alias : HiveFileFormatUtils.doGetAliasesFromPath(pathToAlias, p)) {
-                    JobConf jobConf = new JobConf(myJobConf);
-                    TableScanOperator scanOp = (TableScanOperator) aliasToWork.get(alias);
-                    Utilities.setColumnNameList(jobConf, scanOp, true);
-                    Utilities.setColumnTypeList(jobConf, scanOp, true);
-                    PlanUtils.configureInputJobPropertiesForStorageHandler(tableDesc);
-                    Utilities.copyTableJobPropertiesToConf(tableDesc, jobConf);
-                    total += estimator.estimate(jobConf, scanOp, -1).getTotalLength();
-                  }
-                  resultMap.put(pathStr, new ContentSummary(total, -1, -1));
-                } else {
-                  // todo: should nullify summary for non-native tables,
-                  // not to be selected as a mapjoin target
-                  FileSystem fs = p.getFileSystem(myConf);
-                  resultMap.put(pathStr, fs.getContentSummary(p));
-                }
-              } catch (Exception e) {
-                // We safely ignore this exception for summary data.
-                // We don't update the cache to protect it from polluting other
-                // usages. The worst case is that IOException will always be
-                // retried for another getInputSummary(), which is fine as
-                // IOException is not considered as a common case.
-                LOG.info("Cannot get size of " + pathStr + ". Safely ignored.");
-              }
-            }
-          };
-
-          if (executor == null) {
-            r.run();
-          } else {
-            Future<?> result = executor.submit(r);
-            results.add(result);
+    HiveInterruptCallback interrup = HiveInterruptUtils.add(new HiveInterruptCallback() {
+      @Override
+      public void interrupt() {
+        for (Path path : pathNeedProcess) {
+          try {
+            path.getFileSystem(ctx.getConf()).close();
+          } catch (IOException ignore) {
+            LOG.debug("Failed to close filesystem", ignore);
           }
         }
-
         if (executor != null) {
-          for (Future<?> result : results) {
-            boolean executorDone = false;
-            do {
-              try {
-                result.get();
-                executorDone = true;
-              } catch (InterruptedException e) {
-                LOG.info("Interrupted when waiting threads: ", e);
-                Thread.currentThread().interrupt();
-                break;
-              } catch (ExecutionException e) {
-                throw new IOException(e);
-              }
-            } while (!executorDone);
-          }
-          executor.shutdown();
+          executor.shutdownNow();
         }
-        HiveInterruptUtils.checkInterrupted();
-        for (Map.Entry<String, ContentSummary> entry : resultMap.entrySet()) {
-          ContentSummary cs = entry.getValue();
-
-          summary[0] += cs.getLength();
-          summary[1] += cs.getFileCount();
-          summary[2] += cs.getDirectoryCount();
-
-          ctx.addCS(entry.getKey(), cs);
-          LOG.info("Cache Content Summary for " + entry.getKey() + " length: " + cs.getLength()
-              + " file count: "
-              + cs.getFileCount() + " directory count: " + cs.getDirectoryCount());
-        }
-
-        perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.INPUT_SUMMARY);
-        return new ContentSummary(summary[0], summary[1], summary[2]);
-      } finally {
-        HiveInterruptUtils.remove(interrup);
       }
+    });
+    try {
+      Configuration conf = ctx.getConf();
+      JobConf jobConf = new JobConf(conf);
+      for (Path path : pathNeedProcess) {
+        final Path p = path;
+        final String pathStr = path.toString();
+        // All threads share the same Configuration and JobConf based on the
+        // assumption that they are thread safe if only read operations are
+        // executed. It is not stated in Hadoop's javadoc, the sourcce codes
+        // clearly showed that they made efforts for it and we believe it is
+        // thread safe. Will revisit this piece of codes if we find the assumption
+        // is not correct.
+        final Configuration myConf = conf;
+        final JobConf myJobConf = jobConf;
+        final Map<String, Operator<?>> aliasToWork = work.getAliasToWork();
+        final Map<String, ArrayList<String>> pathToAlias = work.getPathToAliases();
+        final PartitionDesc partDesc = work.getPathToPartitionInfo().get(p.toString());
+        Runnable r = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              Class<? extends InputFormat> inputFormatCls = partDesc
+                      .getInputFileFormatClass();
+              InputFormat inputFormatObj = HiveInputFormat.getInputFormatFromCache(
+                      inputFormatCls, myJobConf);
+              if (inputFormatObj instanceof ContentSummaryInputFormat) {
+                ContentSummaryInputFormat cs = (ContentSummaryInputFormat) inputFormatObj;
+                resultMap.put(pathStr, cs.getContentSummary(p, myJobConf));
+                return;
+              }
+
+              String metaTableStorage = null;
+              if (partDesc.getTableDesc() != null &&
+                      partDesc.getTableDesc().getProperties() != null) {
+                metaTableStorage = partDesc.getTableDesc().getProperties()
+                        .getProperty(hive_metastoreConstants.META_TABLE_STORAGE, null);
+              }
+              if (partDesc.getProperties() != null) {
+                metaTableStorage = partDesc.getProperties()
+                        .getProperty(hive_metastoreConstants.META_TABLE_STORAGE, metaTableStorage);
+              }
+
+              HiveStorageHandler handler = HiveUtils.getStorageHandler(myConf, metaTableStorage);
+              if (handler instanceof InputEstimator) {
+                long total = 0;
+                TableDesc tableDesc = partDesc.getTableDesc();
+                InputEstimator estimator = (InputEstimator) handler;
+                for (String alias : HiveFileFormatUtils.doGetAliasesFromPath(pathToAlias, p)) {
+                  JobConf jobConf = new JobConf(myJobConf);
+                  TableScanOperator scanOp = (TableScanOperator) aliasToWork.get(alias);
+                  Utilities.setColumnNameList(jobConf, scanOp, true);
+                  Utilities.setColumnTypeList(jobConf, scanOp, true);
+                  PlanUtils.configureInputJobPropertiesForStorageHandler(tableDesc);
+                  Utilities.copyTableJobPropertiesToConf(tableDesc, jobConf);
+                  total += estimator.estimate(jobConf, scanOp, -1).getTotalLength();
+                }
+                resultMap.put(pathStr, new ContentSummary(total, -1, -1));
+              } else {
+                // todo: should nullify summary for non-native tables,
+                // not to be selected as a mapjoin target
+                FileSystem fs = p.getFileSystem(myConf);
+                resultMap.put(pathStr, fs.getContentSummary(p));
+              }
+            } catch (Exception e) {
+              e.printStackTrace();
+              // We safely ignore this exception for summary data.
+              // We don't update the cache to protect it from polluting other
+              // usages. The worst case is that IOException will always be
+              // retried for another getInputSummary(), which is fine as
+              // IOException is not considered as a common case.
+              LOG.info("Cannot get size of " + pathStr + ". Safely ignored.");
+            }
+          }
+        };
+
+        if (executor == null) {
+          r.run();
+        } else {
+          Future<?> result = executor.submit(r);
+          results.add(result);
+        }
+      }
+
+      if (executor != null) {
+        for (Future<?> result : results) {
+          boolean executorDone = false;
+          do {
+            try {
+              result.get();
+              executorDone = true;
+            } catch (InterruptedException e) {
+              LOG.info("Interrupted when waiting threads: ", e);
+              Thread.currentThread().interrupt();
+              break;
+            } catch (ExecutionException e) {
+              throw new IOException(e);
+            }
+          } while (!executorDone);
+        }
+        executor.shutdown();
+      }
+      HiveInterruptUtils.checkInterrupted();
+      for (Map.Entry<String, ContentSummary> entry : resultMap.entrySet()) {
+        ContentSummary cs = entry.getValue();
+
+        summary[0] += cs.getLength();
+        summary[1] += cs.getFileCount();
+        summary[2] += cs.getDirectoryCount();
+
+        ctx.addCS(entry.getKey(), cs);
+        LOG.info("Cache Content Summary for " + entry.getKey() + " length: " + cs.getLength()
+                + " file count: "
+                + cs.getFileCount() + " directory count: " + cs.getDirectoryCount());
+      }
+
+      return new ContentSummary(summary[0], summary[1], summary[2]);
+    } finally {
+      if (executor != null) {
+        executor.shutdownNow();
+      }
+      HiveInterruptUtils.remove(interrup);
     }
   }
 
@@ -2879,7 +2891,7 @@ public final class Utilities {
 
   // return sum of lengths except some aliases. returns -1 if any of other alias is unknown
   public static long sumOfExcept(Map<String, Long> aliasToSize,
-      Set<String> aliases, Set<String> excepts) {
+                                 Set<String> aliases, Set<String> excepts) {
     long total = 0;
     for (String alias : aliases) {
       if (excepts != null && excepts.contains(alias)) {
@@ -2895,12 +2907,12 @@ public final class Utilities {
   }
 
   public static boolean isEmptyPath(JobConf job, Path dirPath, Context ctx)
-      throws Exception {
+          throws Exception {
     if (ctx != null) {
       ContentSummary cs = ctx.getCS(dirPath);
       if (cs != null) {
         LOG.info("Content Summary " + dirPath + "length: " + cs.getLength() + " num files: "
-            + cs.getFileCount() + " num directories: " + cs.getDirectoryCount());
+                + cs.getFileCount() + " num directories: " + cs.getDirectoryCount());
         return (cs.getLength() == 0 && cs.getFileCount() == 0 && cs.getDirectoryCount() <= 1);
       } else {
         LOG.info("Content Summary not cached for " + dirPath);
@@ -2950,7 +2962,7 @@ public final class Utilities {
   }
 
   private static void getSparkTasks(List<Task<? extends Serializable>> tasks,
-    List<SparkTask> sparkTasks) {
+                                    List<SparkTask> sparkTasks) {
     for (Task<? extends Serializable> task : tasks) {
       if (task instanceof SparkTask && !sparkTasks.contains(task)) {
         sparkTasks.add((SparkTask) task);
@@ -2987,7 +2999,7 @@ public final class Utilities {
    * corresponding to these dynamic partitions.
    */
   public static List<LinkedHashMap<String, String>> getFullDPSpecs(Configuration conf,
-      DynamicPartitionCtx dpCtx) throws HiveException {
+                                                                   DynamicPartitionCtx dpCtx) throws HiveException {
 
     try {
       Path loadPath = dpCtx.getRootPath();
@@ -3012,7 +3024,7 @@ public final class Utilities {
         // get the dynamically created directory
         Path partPath = status[i].getPath();
         assert fs.getFileStatus(partPath).isDir() : "partitions " + partPath
-            + " is not a directory !";
+                + " is not a directory !";
 
         // generate a full partition specification
         LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>(partSpec);
@@ -3133,9 +3145,9 @@ public final class Utilities {
   }
 
   public static Path generatePath(Path basePath, String dumpFilePrefix,
-      Byte tag, String bigBucketFileName) {
+                                  Byte tag, String bigBucketFileName) {
     return new Path(basePath, "MapJoin-" + dumpFilePrefix + tag +
-      "-" + bigBucketFileName + suffix);
+            "-" + bigBucketFileName + suffix);
   }
 
   public static String generateFileName(Byte tag, String bigBucketFileName) {
@@ -3188,14 +3200,14 @@ public final class Utilities {
    * @throws SemanticException
    */
   public static void reworkMapRedWork(Task<? extends Serializable> task,
-      boolean reworkMapredWork, HiveConf conf) throws SemanticException {
+                                      boolean reworkMapredWork, HiveConf conf) throws SemanticException {
     if (reworkMapredWork && (task instanceof MapRedTask)) {
       try {
         MapredWork mapredWork = ((MapRedTask) task).getWork();
         Set<Class<? extends InputFormat>> reworkInputFormats = new HashSet<Class<? extends InputFormat>>();
         for (PartitionDesc part : mapredWork.getMapWork().getPathToPartitionInfo().values()) {
           Class<? extends InputFormat> inputFormatCls = part
-              .getInputFileFormatClass();
+                  .getInputFileFormatClass();
           if (ReworkMapredInputFormat.class.isAssignableFrom(inputFormatCls)) {
             reworkInputFormats.add(inputFormatCls);
           }
@@ -3204,7 +3216,7 @@ public final class Utilities {
         if (reworkInputFormats.size() > 0) {
           for (Class<? extends InputFormat> inputFormatCls : reworkInputFormats) {
             ReworkMapredInputFormat inst = (ReworkMapredInputFormat) ReflectionUtils
-                .newInstance(inputFormatCls, null);
+                    .newInstance(inputFormatCls, null);
             inst.rework(conf, mapredWork);
           }
         }
@@ -3236,7 +3248,7 @@ public final class Utilities {
    * first time it is caught, or SQLTransientException when the maxRetries has reached.
    */
   public static <T> T executeWithRetry(SQLCommand<T> cmd, PreparedStatement stmt,
-      long baseWindow, int maxRetries)  throws SQLException {
+                                       long baseWindow, int maxRetries)  throws SQLException {
 
     Random r = new Random();
     T result = null;
@@ -3255,7 +3267,7 @@ public final class Utilities {
         try {
           Thread.sleep(waitTime);
         } catch (InterruptedException iex) {
-         }
+        }
       } catch (SQLException e) {
         // throw other types of SQLExceptions (SQLNonTransientException / SQLRecoverableException)
         throw e;
@@ -3278,7 +3290,7 @@ public final class Utilities {
    * first time it is caught, or SQLTransientException when the maxRetries has reached.
    */
   public static Connection connectWithRetry(String connectionString,
-      long waitWindow, int maxRetries) throws SQLException {
+                                            long waitWindow, int maxRetries) throws SQLException {
 
     Random r = new Random();
 
@@ -3320,7 +3332,7 @@ public final class Utilities {
    * first time it is caught, or SQLTransientException when the maxRetries has reached.
    */
   public static PreparedStatement prepareWithRetry(Connection conn, String stmt,
-      long waitWindow, int maxRetries) throws SQLException {
+                                                   long waitWindow, int maxRetries) throws SQLException {
 
     Random r = new Random();
 
@@ -3362,8 +3374,8 @@ public final class Utilities {
    */
   public static long getRandomWaitTime(long baseWindow, int failures, Random r) {
     return (long) (
-          baseWindow * failures +     // grace period for the last round of attempt
-          baseWindow * (failures + 1) * r.nextDouble()); // expanding time window for each failure
+            baseWindow * failures +     // grace period for the last round of attempt
+                    baseWindow * (failures + 1) * r.nextDouble()); // expanding time window for each failure
   }
 
   public static final char sqlEscapeChar = '\\';
@@ -3377,14 +3389,14 @@ public final class Utilities {
     StringBuffer sb = new StringBuffer(key.length());
     for (char c: key.toCharArray()) {
       switch(c) {
-      case '_':
-      case '%':
-      case sqlEscapeChar:
-        sb.append(sqlEscapeChar);
-        // fall through
-      default:
-        sb.append(c);
-        break;
+        case '_':
+        case '%':
+        case sqlEscapeChar:
+          sb.append(sqlEscapeChar);
+          // fall through
+        default:
+          sb.append(c);
+          break;
       }
     }
     return sb.toString();
@@ -3451,23 +3463,23 @@ public final class Utilities {
     // if all inputs are sampled, we should shrink the size of reducers accordingly.
     if (totalInputFileSize != inputSummary.getLength()) {
       LOG.info("BytesPerReducer=" + bytesPerReducer + " maxReducers="
-          + maxReducers + " estimated totalInputFileSize=" + totalInputFileSize);
+              + maxReducers + " estimated totalInputFileSize=" + totalInputFileSize);
     } else {
       LOG.info("BytesPerReducer=" + bytesPerReducer + " maxReducers="
-        + maxReducers + " totalInputFileSize=" + totalInputFileSize);
+              + maxReducers + " totalInputFileSize=" + totalInputFileSize);
     }
 
     // If this map reduce job writes final data to a table and bucketing is being inferred,
     // and the user has configured Hive to do this, make sure the number of reducers is a
     // power of two
     boolean powersOfTwo = conf.getBoolVar(HiveConf.ConfVars.HIVE_INFER_BUCKET_SORT_NUM_BUCKETS_POWER_TWO) &&
-        finalMapRed && !work.getBucketedColsByDirectory().isEmpty();
+            finalMapRed && !work.getBucketedColsByDirectory().isEmpty();
 
     return estimateReducers(totalInputFileSize, bytesPerReducer, maxReducers, powersOfTwo);
   }
 
   public static int estimateReducers(long totalInputFileSize, long bytesPerReducer,
-      int maxReducers, boolean powersOfTwo) {
+                                     int maxReducers, boolean powersOfTwo) {
     double bytes = Math.max(totalInputFileSize, bytesPerReducer);
     int reducers = (int) Math.ceil(bytes / bytesPerReducer);
     reducers = Math.max(1, reducers);
@@ -3503,7 +3515,7 @@ public final class Utilities {
    * @return estimated total input size for job
    */
   public static long getTotalInputFileSize (ContentSummary inputSummary, MapWork work,
-      double highestSamplePercentage) {
+                                            double highestSamplePercentage) {
     long totalInputFileSize = inputSummary.getLength();
     if (work.getNameToSplitSample() == null || work.getNameToSplitSample().isEmpty()) {
       // If percentage block sampling wasn't used, we don't need to do any estimation
@@ -3512,7 +3524,7 @@ public final class Utilities {
 
     if (highestSamplePercentage >= 0) {
       totalInputFileSize = Math.min((long) (totalInputFileSize * (highestSamplePercentage / 100D))
-          , totalInputFileSize);
+              , totalInputFileSize);
     }
     return totalInputFileSize;
   }
@@ -3527,7 +3539,7 @@ public final class Utilities {
    * @return
    */
   public static long getTotalInputNumFiles (ContentSummary inputSummary, MapWork work,
-      double highestSamplePercentage) {
+                                            double highestSamplePercentage) {
     long totalInputNumFiles = inputSummary.getFileCount();
     if (work.getNameToSplitSample() == null || work.getNameToSplitSample().isEmpty()) {
       // If percentage block sampling wasn't used, we don't need to do any estimation
@@ -3536,7 +3548,7 @@ public final class Utilities {
 
     if (highestSamplePercentage >= 0) {
       totalInputNumFiles = Math.min((long) (totalInputNumFiles * (highestSamplePercentage / 100D))
-          , totalInputNumFiles);
+              , totalInputNumFiles);
     }
     return totalInputNumFiles;
   }
@@ -3572,7 +3584,7 @@ public final class Utilities {
     // we usually don't want to create dummy files for tez, however the metadata only
     // optimization relies on it.
     List<Path> paths = getInputPaths(job, work, new Path(scratchDir), null,
-        !work.isUseOneNullRowInputFormat());
+            !work.isUseOneNullRowInputFormat());
 
     return paths;
   }
@@ -3592,7 +3604,7 @@ public final class Utilities {
    * @throws Exception
    */
   public static List<Path> getInputPaths(JobConf job, MapWork work, Path hiveScratchDir,
-      Context ctx, boolean skipDummy) throws Exception {
+                                         Context ctx, boolean skipDummy) throws Exception {
 
     Set<Path> pathsProcessed = new HashSet<Path>();
     List<Path> pathsToAdd = new LinkedList<Path>();
@@ -3606,7 +3618,7 @@ public final class Utilities {
       // Note: this copies the list because createDummyFileForEmptyPartition may modify the map.
       for (String fileString : new LinkedList<String>(work.getPathToAliases().keySet())) {
         if (lDrvStat != null && lDrvStat.driverState == DriverState.INTERRUPT)
-          throw new IOException("Operation is Canceled. "); 
+          throw new IOException("Operation is Canceled. ");
 
         List<String> aliases = work.getPathToAliases().get(fileString);
         if (aliases.contains(alias)) {
@@ -3644,41 +3656,57 @@ public final class Utilities {
       }
     }
 
-    ExecutorService pool = null;
+    List<Path> finalPathsToAdd = new LinkedList<>();
+
     int numExecutors = getMaxExecutorsForInputListing(job, pathsToAdd.size());
     if (numExecutors > 1) {
-      pool = Executors.newFixedThreadPool(numExecutors,
-          new ThreadFactoryBuilder().setDaemon(true).setNameFormat("Get-Input-Paths-%d").build());
-    }
+      ExecutorService pool = Executors.newFixedThreadPool(numExecutors,
+              new ThreadFactoryBuilder().setDaemon(true).setNameFormat("Get-Input-Paths-%d").build());
 
-    List<Path> finalPathsToAdd = new LinkedList<>();
-    Map<GetInputPathsCallable, Future<Path>> getPathsCallableToFuture = new LinkedHashMap<>();
-    for (final Path path : pathsToAdd) {
-      if (lDrvStat != null && lDrvStat.driverState == DriverState.INTERRUPT) {
-        throw new IOException("Operation is Canceled. ");
-      }
-      if (pool == null) {
+      finalPathsToAdd.addAll(getInputPathsWithPool(job, work, hiveScratchDir, ctx, skipDummy, pathsToAdd, pool));
+    } else {
+      for (final Path path : pathsToAdd) {
+        if (lDrvStat != null && lDrvStat.driverState == DriverState.INTERRUPT) {
+          throw new IOException("Operation is Canceled.");
+        }
         Path newPath = new GetInputPathsCallable(path, job, work, hiveScratchDir, ctx, skipDummy).call();
         updatePathForMapWork(newPath, work, path);
         finalPathsToAdd.add(newPath);
-      } else {
-        GetInputPathsCallable callable = new GetInputPathsCallable(path, job, work, hiveScratchDir, ctx, skipDummy);
-        getPathsCallableToFuture.put(callable, pool.submit(callable));
       }
     }
 
-    if (pool != null) {
+    return finalPathsToAdd;
+  }
+
+  @VisibleForTesting
+  static List<Path> getInputPathsWithPool(JobConf job, MapWork work, Path hiveScratchDir,
+                                          Context ctx, boolean skipDummy, List<Path> pathsToAdd,
+                                          ExecutorService pool) throws IOException, ExecutionException, InterruptedException {
+    LockedDriverState lDrvStat = LockedDriverState.getLockedDriverState();
+    List<Path> finalPathsToAdd = new ArrayList<>();
+    try {
+      Map<GetInputPathsCallable, Future<Path>> getPathsCallableToFuture = new LinkedHashMap<>();
+      for (final Path path : pathsToAdd) {
+        if (lDrvStat != null && lDrvStat.driverState == DriverState.INTERRUPT) {
+          throw new IOException("Operation is Canceled.");
+        }
+        GetInputPathsCallable callable = new GetInputPathsCallable(path, job, work, hiveScratchDir, ctx, skipDummy);
+        getPathsCallableToFuture.put(callable, pool.submit(callable));
+      }
+      pool.shutdown();
+
       for (Map.Entry<GetInputPathsCallable, Future<Path>> future : getPathsCallableToFuture.entrySet()) {
         if (lDrvStat != null && lDrvStat.driverState == DriverState.INTERRUPT) {
-          throw new IOException("Operation is Canceled. ");
+          throw new IOException("Operation is Canceled.");
         }
 
         Path newPath = future.getValue().get();
         updatePathForMapWork(newPath, work, future.getKey().path);
         finalPathsToAdd.add(newPath);
       }
+    } finally {
+      pool.shutdownNow();
     }
-
     return finalPathsToAdd;
   }
 
@@ -3692,7 +3720,7 @@ public final class Utilities {
     private final boolean skipDummy;
 
     private GetInputPathsCallable(Path path, JobConf job, MapWork work, Path hiveScratchDir,
-      Context ctx, boolean skipDummy) {
+                                  Context ctx, boolean skipDummy) {
       this.path = path;
       this.job = job;
       this.work = work;
@@ -3713,8 +3741,8 @@ public final class Utilities {
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   private static Path createEmptyFile(Path hiveScratchDir,
-      HiveOutputFormat outFileFormat, JobConf job,
-      Properties props, boolean dummyRow)
+                                      HiveOutputFormat outFileFormat, JobConf job,
+                                      Properties props, boolean dummyRow)
           throws IOException, InstantiationException, IllegalAccessException {
 
     // create a dummy empty file in a new directory
@@ -3730,7 +3758,7 @@ public final class Utilities {
     Path newFilePath = new Path(newFile);
 
     RecordWriter recWriter = outFileFormat.getHiveRecordWriter(job, newFilePath,
-        Text.class, false, props, null);
+            Text.class, false, props, null);
     if (dummyRow) {
       // empty files are omitted at CombineHiveInputFormat.
       // for meta-data only query, it effectively makes partition columns disappear..
@@ -3755,13 +3783,13 @@ public final class Utilities {
     }
 
     Properties props = SerDeUtils.createOverlayedProperties(
-        partDesc.getTableDesc().getProperties(), partDesc.getProperties());
+            partDesc.getTableDesc().getProperties(), partDesc.getProperties());
     HiveOutputFormat outFileFormat = HiveFileFormatUtils.getHiveOutputFormat(job, partDesc);
 
     boolean oneRow = partDesc.getInputFileFormatClass() == OneNullRowInputFormat.class;
 
     Path newPath = createEmptyFile(hiveScratchDir, outFileFormat, job,
-        props, oneRow);
+            props, oneRow);
 
     if (LOG.isInfoEnabled()) {
       LOG.info("Changed input file " + strPath + " to empty file " + newPath);
@@ -3783,7 +3811,7 @@ public final class Utilities {
 
   @SuppressWarnings("rawtypes")
   private static Path createDummyFileForEmptyTable(JobConf job, MapWork work,
-      Path hiveScratchDir, String alias)
+                                                   Path hiveScratchDir, String alias)
           throws Exception {
 
     TableDesc tableDesc = work.getAliasToPartnInfo().get(alias).getTableDesc();
@@ -3796,7 +3824,7 @@ public final class Utilities {
     HiveOutputFormat outFileFormat = HiveFileFormatUtils.getHiveOutputFormat(job, tableDesc);
 
     Path newPath = createEmptyFile(hiveScratchDir, outFileFormat, job,
-        props, false);
+            props, false);
 
     if (LOG.isInfoEnabled()) {
       LOG.info("Changed input file for alias " + alias + " to " + newPath);
@@ -3849,7 +3877,7 @@ public final class Utilities {
    */
   public static void setInputAttributes(Configuration conf, MapWork mWork) {
     HiveConf.ConfVars var = HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez") ?
-      HiveConf.ConfVars.HIVETEZINPUTFORMAT : HiveConf.ConfVars.HIVEINPUTFORMAT;
+            HiveConf.ConfVars.HIVETEZINPUTFORMAT : HiveConf.ConfVars.HIVEINPUTFORMAT;
     if (mWork.getInputformat() != null) {
       HiveConf.setVar(conf, var, mWork.getInputformat());
     }
@@ -3871,12 +3899,12 @@ public final class Utilities {
    * @throws IOException
    */
   public static void createTmpDirs(Configuration conf, MapWork mWork)
-      throws IOException {
+          throws IOException {
 
     Map<String, ArrayList<String>> pa = mWork.getPathToAliases();
     if (pa != null) {
       List<Operator<? extends OperatorDesc>> ops =
-        new ArrayList<Operator<? extends OperatorDesc>>();
+              new ArrayList<Operator<? extends OperatorDesc>>();
       for (List<String> ls : pa.values()) {
         for (String a : ls) {
           ops.add(mWork.getAliasToWork().get(a));
@@ -3896,18 +3924,18 @@ public final class Utilities {
    */
   @SuppressWarnings("unchecked")
   public static void createTmpDirs(Configuration conf, ReduceWork rWork)
-      throws IOException {
+          throws IOException {
     if (rWork == null) {
       return;
     }
     List<Operator<? extends OperatorDesc>> ops
-      = new LinkedList<Operator<? extends OperatorDesc>>();
+            = new LinkedList<Operator<? extends OperatorDesc>>();
     ops.add(rWork.getReducer());
     createTmpDirs(conf, ops);
   }
 
   private static void createTmpDirs(Configuration conf,
-      List<Operator<? extends OperatorDesc>> ops) throws IOException {
+                                    List<Operator<? extends OperatorDesc>> ops) throws IOException {
 
     while (!ops.isEmpty()) {
       Operator<? extends OperatorDesc> op = ops.remove(0);
@@ -3930,10 +3958,10 @@ public final class Utilities {
   }
 
   public static boolean createDirsWithPermission(Configuration conf, Path mkdirPath,
-      FsPermission fsPermission, boolean recursive) throws IOException {
+                                                 FsPermission fsPermission, boolean recursive) throws IOException {
     String origUmask = null;
     LOG.debug("Create dirs " + mkdirPath + " with permission " + fsPermission + " recursive "
-        + recursive);
+            + recursive);
     if (recursive) {
       origUmask = conf.get(FsPermission.UMASK_LABEL);
       // this umask is required because by default the hdfs mask is 022 resulting in
@@ -3971,8 +3999,8 @@ public final class Utilities {
    */
   public static boolean isVectorMode(Configuration conf) {
     if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_VECTORIZATION_ENABLED) &&
-        Utilities.getPlanPath(conf) != null && Utilities
-        .getMapRedWork(conf).getMapWork().getVectorMode()) {
+            Utilities.getPlanPath(conf) != null && Utilities
+            .getMapRedWork(conf).getMapWork().getVectorMode()) {
       return true;
     }
     return false;
@@ -4016,7 +4044,7 @@ public final class Utilities {
       }
     }
     throw new IllegalStateException("Failed to create a temp dir under "
-    + baseDir + " Giving up after " + MAX_ATTEMPS + " attemps");
+            + baseDir + " Giving up after " + MAX_ATTEMPS + " attemps");
 
   }
 
@@ -4039,7 +4067,7 @@ public final class Utilities {
    *         after skipping all headers, otherwise return false.
    */
   public static boolean skipHeader(RecordReader<WritableComparable, Writable> currRecReader,
-      int headerCount, WritableComparable key, Writable value) throws IOException {
+                                   int headerCount, WritableComparable key, Writable value) throws IOException {
     while (headerCount > 0) {
       if (!currRecReader.next(key, value))
         return false;
@@ -4139,7 +4167,7 @@ public final class Utilities {
       OperatorDesc desc = op.getConf();
       String statsTmpDir = null;
       if (desc instanceof FileSinkDesc) {
-         statsTmpDir = ((FileSinkDesc)desc).getStatsTmpDir();
+        statsTmpDir = ((FileSinkDesc)desc).getStatsTmpDir();
       } else if (desc instanceof TableScanDesc) {
         statsTmpDir = ((TableScanDesc) desc).getTmpStatsDir();
       }
