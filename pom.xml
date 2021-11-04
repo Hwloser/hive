@@ -206,19 +206,6 @@
       </snapshots>
     </repository>
     <repository>
-      <id>datanucleus</id>
-      <name>datanucleus maven repository</name>
-      <url>http://www.datanucleus.org/downloads/maven2</url>
-      <layout>default</layout>
-      <releases>
-        <enabled>true</enabled>
-        <checksumPolicy>warn</checksumPolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
       <id>glassfish-repository</id>
       <url>http://maven.glassfish.org/content/groups/glassfish</url>
       <releases>
