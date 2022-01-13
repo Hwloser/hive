@@ -60,6 +60,7 @@ import javax.jdo.identity.IntIdentity;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import com.google.common.base.Joiner;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
 import org.apache.commons.logging.Log;
@@ -2160,6 +2161,19 @@ public class ObjectStore implements RawStore, Configurable {
     return (Collection) query.execute(dbName, tableName, partNameMatcher);
   }
 
+
+  private boolean canTryDirectSQL(List<String> partVals) {
+    if (partVals.isEmpty()) {
+      return false;
+    }
+    for (String val : partVals) {
+      if (val != null && !val.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public List<Partition> listPartitionsPsWithAuth(String db_name, String tbl_name,
       List<String> part_vals, short max_parts, String userName, List<String> groupNames)
@@ -2170,15 +2184,23 @@ public class ObjectStore implements RawStore, Configurable {
 
     try {
       openTransaction();
+
+      MTable mtbl = getMTable(db_name, tbl_name);
+      boolean getauth = null != userName && null != groupNames &&
+              "TRUE".equalsIgnoreCase(
+                      mtbl.getParameters().get("PARTITION_LEVEL_PRIVILEGE"));
+
+      if (!getauth && canTryDirectSQL(part_vals)) {
+        return getPartitions(db_name, tbl_name, -1);
+      }
+
       LOG.debug("executing listPartitionNamesPsWithAuth");
       Collection parts = getPartitionPsQueryResults(db_name, tbl_name,
           part_vals, max_parts, null, queryWrapper);
-      MTable mtbl = getMTable(db_name, tbl_name);
       for (Object o : parts) {
         Partition part = convertToPart((MPartition) o);
         //set auth privileges
-        if (null != userName && null != groupNames &&
-            "TRUE".equalsIgnoreCase(mtbl.getParameters().get("PARTITION_LEVEL_PRIVILEGE"))) {
+        if (getauth) {
           String partName = Warehouse.makePartName(this.convertToFieldSchemas(mtbl
               .getPartitionKeys()), part.getValues());
           PrincipalPrivilegeSet partAuth = getPartitionPrivilegeSet(db_name,
