@@ -46,7 +46,7 @@ public class UDFRand extends UDF {
 
   public DoubleWritable evaluate() {
     if (random == null) {
-      random = new Random();
+      random = new Random(888l);
     }
     result.set(random.nextDouble());
     return result;
