@@ -18,27 +18,22 @@
 
 package org.apache.hadoop.hive.ql.exec.mr;
 
-import java.io.IOException;
-import java.lang.Exception;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.errors.ErrorAndSolution;
 import org.apache.hadoop.hive.ql.exec.errors.TaskLogProcessor;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * JobDebugger takes a RunningJob that has failed and grabs the top 4 failing
@@ -54,6 +49,8 @@ public class JobDebugger implements Runnable {
   private final Set<String> successes = new HashSet<String>(); // Successful task ID's
   private final Map<String, TaskInfo> taskIdToInfo = new HashMap<String, TaskInfo>();
   private int maxFailures = 0;
+
+  private SessionState ss;
 
   // Used for showJobFailDebugInfo
   private static class TaskInfo {
@@ -106,11 +103,12 @@ public class JobDebugger implements Runnable {
   }
 
   public JobDebugger(JobConf conf, RunningJob rj, LogHelper console,
-      Map<String, List<List<String>>> stackTraces) {
+      Map<String, List<List<String>>> stackTraces, SessionState ss) {
     this.conf = conf;
     this.rj = rj;
     this.console = console;
     this.stackTraces = stackTraces;
+    this.ss = ss;
   }
 
   public void run() {
@@ -304,6 +302,8 @@ public class JobDebugger implements Runnable {
           for (String mesg : diagMesgs) {
             sb.append(mesg + "\n");
           }
+
+          ss.getConf().set("mapreduce.job.failed.message", sb.toString());
           console.printError(sb.toString());
         }
 

@@ -18,34 +18,15 @@
 
 package org.apache.hadoop.hive.cli;
 
-import static org.apache.hadoop.util.StringUtils.stringifyException;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Splitter;
 import jline.console.ConsoleReader;
+import jline.console.completer.ArgumentCompleter;
+import jline.console.completer.ArgumentCompleter.AbstractArgumentDelimiter;
+import jline.console.completer.ArgumentCompleter.ArgumentDelimiter;
 import jline.console.completer.Completer;
+import jline.console.completer.StringsCompleter;
 import jline.console.history.FileHistory;
 import jline.console.history.PersistentHistory;
-import jline.console.completer.StringsCompleter;
-import jline.console.completer.ArgumentCompleter;
-import jline.console.completer.ArgumentCompleter.ArgumentDelimiter;
-import jline.console.completer.ArgumentCompleter.AbstractArgumentDelimiter;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,11 +56,17 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessorFactory;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
+import org.apache.hadoop.hive.ql.util.NotifyUtil;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hive.common.util.HiveStringUtils;
-
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
+
+import java.io.*;
+import java.sql.SQLException;
+import java.util.*;
+
+import static org.apache.hadoop.util.StringUtils.stringifyException;
 
 
 /**
@@ -223,8 +210,10 @@ public class CliDriver {
             }
 
             qp.setTryCount(tryCount);
-            ret = qp.run(cmd).getResponseCode();
+            CommandProcessorResponse response = qp.run(cmd);
+            ret = response.getResponseCode();
             if (ret != 0) {
+              NotifyUtil.record(ss, response.getErrorMessage(), cmd);
               qp.close();
               return ret;
             }
