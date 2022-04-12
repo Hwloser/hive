@@ -38,7 +38,6 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.OperationLog;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.ql.util.NotifyUtil;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -167,7 +166,7 @@ public class SQLOperation extends ExecuteStatementOperation {
       }).substitute(sqlOperationConf, statement);
       response = driver.compileAndRespond(subStatement);
       if (0 != response.getResponseCode()) {
-        throw toSQLException("Error while compiling statement", response);
+        throw toSQLException("Error while compiling statement", response, statement);
       }
 
       mResultSchema = driver.getSchema();
@@ -218,8 +217,7 @@ public class SQLOperation extends ExecuteStatementOperation {
       driver.setTryCount(Integer.MAX_VALUE);
       response = driver.run();
       if (0 != response.getResponseCode()) {
-        NotifyUtil.record(SessionState.get(), response.getErrorMessage(), statement);
-        throw toSQLException("Error while processing statement", response);
+        throw toSQLException("Error while processing statement", response, statement);
       }
     } catch (HiveSQLException e) {
       /**

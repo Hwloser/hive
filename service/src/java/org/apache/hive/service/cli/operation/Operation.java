@@ -17,37 +17,31 @@
  */
 package org.apache.hive.service.cli.operation;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.metrics.common.Metrics;
 import org.apache.hadoop.hive.common.metrics.common.MetricsConstant;
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
-import com.google.common.collect.Sets;
 import org.apache.hadoop.hive.common.metrics.common.MetricsScope;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.OperationLog;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hive.service.cli.FetchOrientation;
-import org.apache.hive.service.cli.HiveSQLException;
-import org.apache.hive.service.cli.OperationHandle;
-import org.apache.hive.service.cli.OperationState;
-import org.apache.hive.service.cli.OperationStatus;
-import org.apache.hive.service.cli.OperationType;
-import org.apache.hive.service.cli.RowSet;
-import org.apache.hive.service.cli.TableSchema;
+import org.apache.hadoop.hive.ql.util.NotifyUtil;
+import org.apache.hive.service.cli.*;
 import org.apache.hive.service.cli.session.HiveSession;
 import org.apache.hive.service.cli.thrift.TProtocolVersion;
 import org.apache.log4j.MDC;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public abstract class Operation {
   // Constants of the key strings for the log4j ThreadContext.
@@ -396,12 +390,13 @@ public abstract class Operation {
     }
   }
 
-  protected HiveSQLException toSQLException(String prefix, CommandProcessorResponse response) {
+  protected HiveSQLException toSQLException(String prefix, CommandProcessorResponse response, String statement) {
     HiveSQLException ex = new HiveSQLException(prefix + ": " + response.getErrorMessage(),
         response.getSQLState(), response.getResponseCode());
     if (response.getException() != null) {
       ex.initCause(response.getException());
     }
+    NotifyUtil.record(SessionState.get(), response.getErrorMessage(), statement);
     return ex;
   }
 
