@@ -23,16 +23,7 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -579,7 +570,8 @@ public class Driver implements CommandProcessor {
 
       // get the output schema
       schema = getSchema(sem, conf);
-      plan = new QueryPlan(queryStr, sem, perfLogger.getStartTime(PerfLogger.DRIVER_RUN), queryId,
+      long beginTime = perfLogger.getStartTime(PerfLogger.DRIVER_RUN) == 0L ? new Date().getTime() : perfLogger.getStartTime(PerfLogger.DRIVER_RUN);
+      plan = new QueryPlan(queryStr, sem, beginTime, queryId,
         SessionState.get().getHiveOperation(), schema, queryDisplay);
 
       conf.setVar(HiveConf.ConfVars.HIVEQUERYSTRING, queryStr);
