@@ -208,7 +208,7 @@ public class CliDriver {
             if (ss.getIsVerbose()) {
               out.println(cmd);
             }
-
+            ss.getConf().setLong("query.start.time",start);
             qp.setTryCount(tryCount);
             CommandProcessorResponse response = qp.run(cmd);
             ret = response.getResponseCode();

@@ -249,6 +249,8 @@ public class SQLOperation extends ExecuteStatementOperation {
     final boolean asyncPrepare = runAsync
       && HiveConf.getBoolVar(opConfig,
         HiveConf.ConfVars.HIVE_SERVER2_ASYNC_EXEC_ASYNC_COMPILE);
+    SessionState.get().getConf().setLong("query.start.time",System.currentTimeMillis());
+    SessionState.get().getConf().set(HiveConf.ConfVars.HIVEQUERYID.varname, opConfig.get(HiveConf.ConfVars.HIVEQUERYID.varname));
     if (!asyncPrepare) {
       prepare(opConfig);
     }
