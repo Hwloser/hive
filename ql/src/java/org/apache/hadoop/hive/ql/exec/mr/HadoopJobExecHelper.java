@@ -290,7 +290,9 @@ public class HadoopJobExecHelper {
       Counters ctrs = th.getCounters();
 
       if (fatal = checkFatalErrors(ctrs, errMsg)) {
-        console.printError("[Fatal Error] " + errMsg.toString() + ". Killing the job.");
+        String errorMsg = "[Fatal Error] " + errMsg.toString() + ". Killing the job.";
+        console.printError(errorMsg);
+        SessionState.get().getConf().set("mapreduce.job.failed.message", errorMsg);
         rj.killJob();
         continue;
       }
