@@ -14,15 +14,18 @@ public class RedisUtil {
 
     private RedisUtil() {
     }
+
     public static JedisCluster getJedisCluster() {
-        Set<HostAndPort> nodes = new HashSet<>();
-        String redisClusterNodes = SessionState.get().getConf().get("redis.cluster.nodes");
-        String[] hostPortPeer = redisClusterNodes.split(",");
-        for (String s : hostPortPeer) {
-            String[] ss = s.split(":");
-            nodes.add(new HostAndPort(ss[0], Integer.parseInt(ss[1])));
+        if (jedisCluster == null) {
+            Set<HostAndPort> nodes = new HashSet<>();
+            String redisClusterNodes = SessionState.get().getConf().get("redis.cluster.nodes");
+            String[] hostPortPeer = redisClusterNodes.split(",");
+            for (String s : hostPortPeer) {
+                String[] ss = s.split(":");
+                nodes.add(new HostAndPort(ss[0], Integer.parseInt(ss[1])));
+            }
+            jedisCluster = new JedisCluster(nodes, 2000, 2000, 5, SessionState.get().getConf().get("redis.cluster.password"), new GenericObjectPoolConfig());
         }
-        jedisCluster = new JedisCluster(nodes, 2000, 2000, 5, SessionState.get().getConf().get("redis.cluster.password"), new GenericObjectPoolConfig());
         return jedisCluster;
     }
 }
