@@ -213,7 +213,7 @@ public class CliDriver {
             CommandProcessorResponse response = qp.run(cmd);
             ret = response.getResponseCode();
             if (ret != 0) {
-              NotifyUtil.record(ss, response.getErrorMessage(), cmd);
+//              NotifyUtil.record(ss, response.getErrorMessage(), cmd);
               qp.close();
               return ret;
             }
